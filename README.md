@@ -24,6 +24,7 @@ First, see the Google Group and other references on the [community](http://www.s
 * https://github.com/tizoc/chibi-shen
 * https://github.com/eschulte/shen-mode
 * https://github.com/vasil-sd/shen-libs
+  * Also see http://www.shenlanguage.org/library.html
 * https://github.com/gravicappa/shen-js
 * https://github.com/gravicappa/klvm
 * https://github.com/gravicappa/shen_run
