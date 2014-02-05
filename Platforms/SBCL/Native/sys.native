@@ -1,0 +1,1064 @@
+
+"**********************************************************************************
+*                           The License						                                      *
+* 										                                                                  *
+* The user is free to produce commercial applications with the software, to 	          *
+* distribute these applications in source or binary  form, and to charge monies         *
+* for them as he sees fit and in concordance with the laws of the land subject 	        *
+* to the following license.							                                                *
+*										                                                                    * 
+* 1. The license applies to all the software and all derived software and 	            *
+*    must appear on such.							                                                  *
+*										                                                                    *
+* 2. It is illegal to distribute the software without this license attached	            *
+*    to it and use of the software implies agreement with the license as such.          *
+*    It is illegal for anyone who is not the copyright holder to tamper with 	          *
+*    or change the license.							                                                *
+*										                                                                    *
+* 3. Neither the names of Lambda Associates or the copyright holder may be used         *
+*    to endorse or promote products built using the software without specific 	        *
+*    prior written permission from the copyright holder.		                            *
+*										                                                                    *
+* 4. That possession of this license does not confer on the copyright holder 	          *
+*    any special contractual obligation towards the user. That in no event 	            * 
+*    shall the copyright holder be liable for any direct, indirect, incidental,        *   
+*    special, exemplary or consequential damages (including but not limited             *
+*    to procurement of substitute goods or services, loss of use, data, 	              * 
+*    interruption), however caused and on any theory of liability, whether in	          * 
+*    contract, strict liability or tort (including negligence) arising in any         	*
+*    way out of the use of the software, even if advised of the possibility of         	*
+*    such damage.						                                                        		* 
+*										                                                                    *
+* 5. It is permitted for the user to change the software, for the purpose of 	          *
+*    improving performance, correcting an error, or porting to a new platform, 	        *
+*    and distribute the derived version of Shen provided the resulting program 	        *
+*    conforms in all respects to the Shen standard and is issued under that             * 
+*    title. The user must make it clear with his distribution that he/she is 	          *
+*    the author of the changes and what these changes are and why. 		                  *
+*										                                                                    *
+* 6. Derived versions of this software in whatever form are subject to the same         *
+*    restrictions. In particular it is not permitted to make derived copies of          *
+*    this software which do not conform to the Shen standard or appear under a          *
+*    different title.								                                                    *
+*										                                                                    *
+*    It is permitted to distribute versions of Shen which incorporate libraries,        *
+*    graphics or other facilities which are not part of the Shen standard.	            *
+*										                                                                    *
+* For an explication of this license see www.shenlanguage.org/license.htm which         *
+* explains this license in full.                                                        *
+*				 						                                                                    *
+*****************************************************************************************
+"
+
+(DEFUN thaw (V1809)
+  (let Args (LIST)
+       (let NewF (shen.maplispsym V1809)
+            (trap-error (APPLY NewF Args)
+                        (lambda E
+                                (COND
+                                 ((shen.arity-error? V1809 Args)
+                                  (shen.funcall
+                                   (EVAL (shen.nest-lambda V1809 NewF)) Args))
+                                 ((EQ NewF 'or)
+                                  (shen.funcall
+                                   (lambda X1 (lambda X2 (or X1 X2))) Args))
+                                 ((EQ NewF 'and)
+                                  (shen.funcall
+                                   (lambda X1 (lambda X2 (and X1 X2))) Args))
+                                 ((EQ NewF 'trap-error)
+                                  (shen.funcall
+                                   (lambda X1 (lambda X2 (trap-error X1 X2)))
+                                   Args))
+                                 ((shen.bad-lambda-call? NewF Args)
+                                  (shen.funcall NewF Args))
+                                 (T (shen.relay-error E))))))))
+
+(DEFUN eval (V1810)
+  (LET ((Macroexpand (shen.walk #'(LAMBDA (V1807) (macroexpand V1807)) V1810)))
+    (IF (shen.wrapper (shen.packaged? Macroexpand))
+        (map 'shen.eval-without-macros (shen.package-contents Macroexpand))
+        (shen.eval-without-macros Macroexpand))))
+
+(DEFUN shen.eval-without-macros (V1811)
+  (eval-kl (shen.elim-def (shen.proc-input+ V1811))))
+
+(DEFUN shen.proc-input+ (V1812)
+  (COND
+   ((AND (CONSP V1812)
+         (AND (EQ 'input+ (CAR V1812))
+              (AND (CONSP (CDR V1812))
+                   (AND (CONSP (CDR (CDR V1812)))
+                        (NULL (CDR (CDR (CDR V1812))))))))
+    (CONS 'input+
+          (CONS (shen.rcons_form (CAR (CDR V1812))) (CDR (CDR V1812)))))
+   ((AND (CONSP V1812)
+         (AND (EQ 'read+ (CAR V1812))
+              (AND (CONSP (CDR V1812))
+                   (AND (CONSP (CDR (CDR V1812)))
+                        (NULL (CDR (CDR (CDR V1812))))))))
+    (CONS 'read+ (CONS (shen.rcons_form (CAR (CDR V1812))) (CDR (CDR V1812)))))
+   ((CONSP V1812) (map 'shen.proc-input+ V1812)) (T V1812)))
+
+(DEFUN shen.elim-def (V1813)
+  (COND
+   ((AND (CONSP V1813) (AND (EQ 'define (CAR V1813)) (CONSP (CDR V1813))))
+    (shen.shen->kl (CAR (CDR V1813)) (CDR (CDR V1813))))
+   ((AND (CONSP V1813) (AND (EQ 'defmacro (CAR V1813)) (CONSP (CDR V1813))))
+    (LET ((Default (CONS 'X (CONS '-> (CONS 'X NIL)))))
+      (LET ((Def
+             (shen.elim-def
+              (CONS 'define
+                    (CONS (CAR (CDR V1813))
+                          (APPEND (CDR (CDR V1813)) Default))))))
+        (LET ((MacroAdd (shen.add-macro (CAR (CDR V1813)))))
+          Def))))
+   ((AND (CONSP V1813) (AND (EQ 'defcc (CAR V1813)) (CONSP (CDR V1813))))
+    (shen.elim-def (shen.yacc V1813)))
+   ((CONSP V1813) (map 'shen.elim-def V1813)) (T V1813)))
+
+(DEFUN shen.add-macro (V1814) (set '*macros* (adjoin V1814 *macros*)))
+
+(DEFUN shen.packaged? (V1821)
+  (COND
+   ((AND (CONSP V1821)
+         (AND (EQ 'package (CAR V1821))
+              (AND (CONSP (CDR V1821)) (CONSP (CDR (CDR V1821))))))
+    'true)
+   (T 'false)))
+
+(DEFUN external (V1822)
+  (trap-error (get V1822 'shen.external-symbols *property-vector*)
+              #'(LAMBDA (E)
+                  (simple-error
+                   (cn "package "
+                       (shen.app V1822 " has not been used.
+"
+                        'shen.a))))))
+
+(DEFUN shen.package-contents (V1825)
+  (COND
+   ((AND (CONSP V1825)
+         (AND (EQ 'package (CAR V1825))
+              (AND (CONSP (CDR V1825))
+                   (AND (EQ 'null (CAR (CDR V1825)))
+                        (CONSP (CDR (CDR V1825)))))))
+    (CDR (CDR (CDR V1825))))
+   ((AND (CONSP V1825)
+         (AND (EQ 'package (CAR V1825))
+              (AND (CONSP (CDR V1825)) (CONSP (CDR (CDR V1825))))))
+    (shen.packageh (CAR (CDR V1825)) (CAR (CDR (CDR V1825)))
+     (CDR (CDR (CDR V1825)))))
+   (T (shen.sys-error 'shen.package-contents))))
+
+(DEFUN shen.walk (V1826 V1827)
+  (COND
+   ((CONSP V1827)
+    (let Args (LIST (map #'(LAMBDA (Z) (shen.walk V1826 Z)) V1827))
+         (let NewF (shen.maplispsym V1826)
+              (trap-error (APPLY NewF Args)
+                          (lambda E
+                                  (COND
+                                   ((shen.arity-error? V1826 Args)
+                                    (shen.funcall
+                                     (EVAL (shen.nest-lambda V1826 NewF))
+                                     Args))
+                                   ((EQ NewF 'or)
+                                    (shen.funcall
+                                     (lambda X1 (lambda X2 (or X1 X2))) Args))
+                                   ((EQ NewF 'and)
+                                    (shen.funcall
+                                     (lambda X1 (lambda X2 (and X1 X2))) Args))
+                                   ((EQ NewF 'trap-error)
+                                    (shen.funcall
+                                     (lambda X1 (lambda X2 (trap-error X1 X2)))
+                                     Args))
+                                   ((shen.bad-lambda-call? NewF Args)
+                                    (shen.funcall NewF Args))
+                                   (T (shen.relay-error E))))))))
+   (T
+    (let Args (LIST V1827)
+         (let NewF (shen.maplispsym V1826)
+              (trap-error (APPLY NewF Args)
+                          (lambda E
+                                  (COND
+                                   ((shen.arity-error? V1826 Args)
+                                    (shen.funcall
+                                     (EVAL (shen.nest-lambda V1826 NewF))
+                                     Args))
+                                   ((EQ NewF 'or)
+                                    (shen.funcall
+                                     (lambda X1 (lambda X2 (or X1 X2))) Args))
+                                   ((EQ NewF 'and)
+                                    (shen.funcall
+                                     (lambda X1 (lambda X2 (and X1 X2))) Args))
+                                   ((EQ NewF 'trap-error)
+                                    (shen.funcall
+                                     (lambda X1 (lambda X2 (trap-error X1 X2)))
+                                     Args))
+                                   ((shen.bad-lambda-call? NewF Args)
+                                    (shen.funcall NewF Args))
+                                   (T (shen.relay-error E))))))))))
+
+(DEFUN compile (V1828 V1829 V1830)
+  (LET ((O
+         (let Args (LIST (CONS V1829 (CONS NIL NIL)))
+              (let NewF (shen.maplispsym V1828)
+                   (trap-error (APPLY NewF Args)
+                               (lambda E
+                                       (COND
+                                        ((shen.arity-error? V1828 Args)
+                                         (shen.funcall
+                                          (EVAL (shen.nest-lambda V1828 NewF))
+                                          Args))
+                                        ((EQ NewF 'or)
+                                         (shen.funcall
+                                          (lambda X1 (lambda X2 (or X1 X2)))
+                                          Args))
+                                        ((EQ NewF 'and)
+                                         (shen.funcall
+                                          (lambda X1 (lambda X2 (and X1 X2)))
+                                          Args))
+                                        ((EQ NewF 'trap-error)
+                                         (shen.funcall
+                                          (lambda X1
+                                                  (lambda X2
+                                                          (trap-error X1 X2)))
+                                          Args))
+                                        ((shen.bad-lambda-call? NewF Args)
+                                         (shen.funcall NewF Args))
+                                        (T (shen.relay-error E)))))))))
+    (IF (OR (EQ (fail) O) (NOT (NULL (CAR O))))
+        (let Args (LIST O)
+             (let NewF (shen.maplispsym V1830)
+                  (trap-error (APPLY NewF Args)
+                              (lambda E
+                                      (COND
+                                       ((shen.arity-error? V1830 Args)
+                                        (shen.funcall
+                                         (EVAL (shen.nest-lambda V1830 NewF))
+                                         Args))
+                                       ((EQ NewF 'or)
+                                        (shen.funcall
+                                         (lambda X1 (lambda X2 (or X1 X2)))
+                                         Args))
+                                       ((EQ NewF 'and)
+                                        (shen.funcall
+                                         (lambda X1 (lambda X2 (and X1 X2)))
+                                         Args))
+                                       ((EQ NewF 'trap-error)
+                                        (shen.funcall
+                                         (lambda X1
+                                                 (lambda X2
+                                                         (trap-error X1 X2)))
+                                         Args))
+                                       ((shen.bad-lambda-call? NewF Args)
+                                        (shen.funcall NewF Args))
+                                       (T (shen.relay-error E)))))))
+        (shen.hdtl O))))
+
+(DEFUN fail-if (V1831 V1832)
+  (IF (shen.wrapper
+       (let Args (LIST V1832)
+            (let NewF (shen.maplispsym V1831)
+                 (trap-error (APPLY NewF Args)
+                             (lambda E
+                                     (COND
+                                      ((shen.arity-error? V1831 Args)
+                                       (shen.funcall
+                                        (EVAL (shen.nest-lambda V1831 NewF))
+                                        Args))
+                                      ((EQ NewF 'or)
+                                       (shen.funcall
+                                        (lambda X1 (lambda X2 (or X1 X2)))
+                                        Args))
+                                      ((EQ NewF 'and)
+                                       (shen.funcall
+                                        (lambda X1 (lambda X2 (and X1 X2)))
+                                        Args))
+                                      ((EQ NewF 'trap-error)
+                                       (shen.funcall
+                                        (lambda X1
+                                                (lambda X2 (trap-error X1 X2)))
+                                        Args))
+                                      ((shen.bad-lambda-call? NewF Args)
+                                       (shen.funcall NewF Args))
+                                      (T (shen.relay-error E))))))))
+      (fail)
+      V1832))
+
+(DEFUN @s (V1833 V1834) (cn V1833 V1834))
+
+(DEFUN tc? () shen.*tc*)
+
+(DEFUN ps (V1835)
+  (trap-error (get V1835 'shen.source *property-vector*)
+              #'(LAMBDA (E)
+                  (simple-error
+                   (shen.app V1835 " not found.
+"
+                    'shen.a)))))
+
+(DEFUN stinput () *stinput*)
+
+(DEFUN shen.+vector? (V1836)
+  (and (absvector? V1836) (shen.greater? (<-address V1836 0) 0)))
+
+(DEFUN vector (V1837)
+  (LET ((Vector (absvector (1+ V1837))))
+    (LET ((ZeroStamp (address-> Vector 0 V1837)))
+      (LET ((Standard
+             (IF (shen.ABSEQUAL V1837 0)
+                 ZeroStamp
+                 (shen.fillvector ZeroStamp 1 V1837 (fail)))))
+        Standard))))
+
+(DEFUN shen.fillvector (V1838 V1839 V1840 V1841)
+  (COND ((shen.ABSEQUAL V1840 V1839) (address-> V1838 V1840 V1841))
+        (T
+         (shen.fillvector (address-> V1838 V1839 V1841) (1+ V1839) V1840
+          V1841))))
+
+(DEFUN vector? (V1843)
+  (and (absvector? V1843)
+       (trap-error (shen.greater-than-or-equal-to? (<-address V1843 0) 0)
+                   #'(LAMBDA (E) 'false))))
+
+(DEFUN vector-> (V1844 V1845 V1846)
+  (IF (shen.ABSEQUAL V1845 0)
+      (simple-error "cannot access 0th element of a vector
+")
+      (address-> V1844 V1845 V1846)))
+
+(DEFUN <-vector (V1847 V1848)
+  (IF (shen.ABSEQUAL V1848 0)
+      (simple-error "cannot access 0th element of a vector
+")
+      (LET ((VectorElement (<-address V1847 V1848)))
+        (IF (EQ VectorElement (fail))
+            (simple-error "vector element not found
+")
+            VectorElement))))
+
+(DEFUN shen.posint? (V1849)
+  (and (integer? V1849) (shen.greater-than-or-equal-to? V1849 0)))
+
+(DEFUN limit (V1850) (<-address V1850 0))
+
+(DEFUN symbol? (V1851)
+  (COND
+   ((OR (shen.wrapper (boolean? V1851)) (OR (NUMBERP V1851) (STRINGP V1851)))
+    'false)
+   (T
+    (trap-error
+     (LET ((String (str V1851)))
+       (shen.analyse-symbol? String))
+     #'(LAMBDA (E) 'false)))))
+
+(DEFUN shen.analyse-symbol? (V1852)
+  (COND
+   ((shen.wrapper (shen.+string? V1852))
+    (and (shen.alpha? (pos V1852 0)) (shen.alphanums? (tlstr V1852))))
+   (T (shen.sys-error 'shen.analyse-symbol?))))
+
+(DEFUN shen.alpha? (V1853)
+  (element? V1853
+   (CONS "A"
+         (CONS "B"
+               (CONS "C"
+                     (CONS "D"
+                           (CONS "E"
+                                 (CONS "F"
+                                       (CONS "G"
+                                             (CONS "H"
+                                                   (CONS "I"
+                                                         (CONS "J"
+                                                               (CONS "K"
+                                                                     (CONS "L"
+                                                                           (CONS
+                                                                            "M"
+                                                                            (CONS
+                                                                             "N"
+                                                                             (CONS
+                                                                              "O"
+                                                                              (CONS
+                                                                               "P"
+                                                                               (CONS
+                                                                                "Q"
+                                                                                (CONS
+                                                                                 "R"
+                                                                                 (CONS
+                                                                                  "S"
+                                                                                  (CONS
+                                                                                   "T"
+                                                                                   (CONS
+                                                                                    "U"
+                                                                                    (CONS
+                                                                                     "V"
+                                                                                     (CONS
+                                                                                      "W"
+                                                                                      (CONS
+                                                                                       "X"
+                                                                                       (CONS
+                                                                                        "Y"
+                                                                                        (CONS
+                                                                                         "Z"
+                                                                                         (CONS
+                                                                                          "a"
+                                                                                          (CONS
+                                                                                           "b"
+                                                                                           (CONS
+                                                                                            "c"
+                                                                                            (CONS
+                                                                                             "d"
+                                                                                             (CONS
+                                                                                              "e"
+                                                                                              (CONS
+                                                                                               "f"
+                                                                                               (CONS
+                                                                                                "g"
+                                                                                                (CONS
+                                                                                                 "h"
+                                                                                                 (CONS
+                                                                                                  "i"
+                                                                                                  (CONS
+                                                                                                   "j"
+                                                                                                   (CONS
+                                                                                                    "k"
+                                                                                                    (CONS
+                                                                                                     "l"
+                                                                                                     (CONS
+                                                                                                      "m"
+                                                                                                      (CONS
+                                                                                                       "n"
+                                                                                                       (CONS
+                                                                                                        "o"
+                                                                                                        (CONS
+                                                                                                         "p"
+                                                                                                         (CONS
+                                                                                                          "q"
+                                                                                                          (CONS
+                                                                                                           "r"
+                                                                                                           (CONS
+                                                                                                            "s"
+                                                                                                            (CONS
+                                                                                                             "t"
+                                                                                                             (CONS
+                                                                                                              "u"
+                                                                                                              (CONS
+                                                                                                               "v"
+                                                                                                               (CONS
+                                                                                                                "w"
+                                                                                                                (CONS
+                                                                                                                 "x"
+                                                                                                                 (CONS
+                                                                                                                  "y"
+                                                                                                                  (CONS
+                                                                                                                   "z"
+                                                                                                                   (CONS
+                                                                                                                    "="
+                                                                                                                    (CONS
+                                                                                                                     "*"
+                                                                                                                     (CONS
+                                                                                                                      "/"
+                                                                                                                      (CONS
+                                                                                                                       "+"
+                                                                                                                       (CONS
+                                                                                                                        "-"
+                                                                                                                        (CONS
+                                                                                                                         "_"
+                                                                                                                         (CONS
+                                                                                                                          "?"
+                                                                                                                          (CONS 
+                                                                                                                           "$"
+                                                                                                                           (CONS
+                                                                                                                            "!" 
+                                                                                                                            (CONS
+                                                                                                                             "@"
+                                                                                                                             (CONS
+                                                                                                                              "~"
+                                                                                                                              (CONS
+                                                                                                                               ">"
+                                                                                                                               (CONS
+                                                                                                                                "<"
+                                                                                                                                (CONS
+                                                                                                                                 "&"
+                                                                                                                                 (CONS
+                                                                                                                                  "%"
+                                                                                                                                  (CONS
+                                                                                                                                   "{"
+                                                                                                                                   (CONS
+                                                                                                                                    "}"
+                                                                                                                                    (CONS
+                                                                                                                                     ":"
+                                                                                                                                     (CONS
+                                                                                                                                      ";"
+                                                                                                                                      (CONS
+                                                                                                                                       "`"
+                                                                                                                                       (CONS
+                                                                                                                                        "#"
+                                                                                                                                        (CONS
+                                                                                                                                         "'"
+                                                                                                                                         (CONS
+                                                                                                                                          "."
+                                                                                                                                          NIL)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+
+(DEFUN shen.alphanums? (V1854)
+  (COND ((EQUAL "" V1854) 'true)
+        ((shen.wrapper (shen.+string? V1854))
+         (and (shen.alphanum? (pos V1854 0)) (shen.alphanums? (tlstr V1854))))
+        (T (shen.sys-error 'shen.alphanums?))))
+
+(DEFUN shen.alphanum? (V1855) (or (shen.alpha? V1855) (shen.digit? V1855)))
+
+(DEFUN shen.digit? (V1856)
+  (element? V1856
+   (CONS "1"
+         (CONS "2"
+               (CONS "3"
+                     (CONS "4"
+                           (CONS "5"
+                                 (CONS "6"
+                                       (CONS "7"
+                                             (CONS "8"
+                                                   (CONS "9"
+                                                         (CONS "0"
+                                                               NIL))))))))))))
+
+(DEFUN variable? (V1857)
+  (COND
+   ((OR (shen.wrapper (boolean? V1857)) (OR (NUMBERP V1857) (STRINGP V1857)))
+    'false)
+   (T
+    (trap-error
+     (LET ((String (str V1857)))
+       (shen.analyse-variable? String))
+     #'(LAMBDA (E) 'false)))))
+
+(DEFUN shen.analyse-variable? (V1858)
+  (COND
+   ((shen.wrapper (shen.+string? V1858))
+    (and (shen.uppercase? (pos V1858 0)) (shen.alphanums? (tlstr V1858))))
+   (T (shen.sys-error 'shen.analyse-variable?))))
+
+(DEFUN shen.uppercase? (V1859)
+  (element? V1859
+   (CONS "A"
+         (CONS "B"
+               (CONS "C"
+                     (CONS "D"
+                           (CONS "E"
+                                 (CONS "F"
+                                       (CONS "G"
+                                             (CONS "H"
+                                                   (CONS "I"
+                                                         (CONS "J"
+                                                               (CONS "K"
+                                                                     (CONS "L"
+                                                                           (CONS
+                                                                            "M"
+                                                                            (CONS
+                                                                             "N"
+                                                                             (CONS
+                                                                              "O"
+                                                                              (CONS
+                                                                               "P"
+                                                                               (CONS
+                                                                                "Q"
+                                                                                (CONS
+                                                                                 "R"
+                                                                                 (CONS
+                                                                                  "S"
+                                                                                  (CONS
+                                                                                   "T"
+                                                                                   (CONS
+                                                                                    "U"
+                                                                                    (CONS
+                                                                                     "V"
+                                                                                     (CONS
+                                                                                      "W"
+                                                                                      (CONS
+                                                                                       "X"
+                                                                                       (CONS
+                                                                                        "Y"
+                                                                                        (CONS
+                                                                                         "Z"
+                                                                                         NIL))))))))))))))))))))))))))))
+
+(DEFUN gensym (V1860) (concat V1860 (INCF shen.*gensym*)))
+
+(DEFUN concat (V1861 V1862) (intern (cn (str V1861) (str V1862))))
+
+(DEFUN @p (V1863 V1864)
+  (LET ((Vector (absvector 3)))
+    (LET ((Tag (address-> Vector 0 'shen.tuple)))
+      (LET ((Fst (address-> Vector 1 V1863)))
+        (LET ((Snd (address-> Vector 2 V1864)))
+          Vector)))))
+
+(DEFUN fst (V1865) (<-address V1865 1))
+
+(DEFUN snd (V1866) (<-address V1866 2))
+
+(DEFUN tuple? (V1867)
+  (trap-error
+   (and (absvector? V1867) (shen.equal? 'shen.tuple (<-address V1867 0)))
+   #'(LAMBDA (E) 'false)))
+
+(DEFUN append (V1868 V1869)
+  (COND ((NULL V1868) V1869)
+        ((CONSP V1868) (CONS (CAR V1868) (APPEND (CDR V1868) V1869)))
+        (T (shen.sys-error 'append))))
+
+(DEFUN @v (V1870 V1871)
+  (LET ((Limit (limit V1871)))
+    (LET ((NewVector (vector (1+ Limit))))
+      (LET ((X+NewVector (vector-> NewVector 1 V1870)))
+        (IF (shen.ABSEQUAL Limit 0)
+            X+NewVector
+            (shen.@v-help V1871 1 Limit X+NewVector))))))
+
+(DEFUN shen.@v-help (V1872 V1873 V1874 V1875)
+  (COND
+   ((shen.ABSEQUAL V1874 V1873)
+    (shen.copyfromvector V1872 V1875 V1874 (1+ V1874)))
+   (T
+    (shen.@v-help V1872 (1+ V1873) V1874
+     (shen.copyfromvector V1872 V1875 V1873 (1+ V1873))))))
+
+(DEFUN shen.copyfromvector (V1877 V1878 V1879 V1880)
+  (trap-error (vector-> V1878 V1880 (<-vector V1877 V1879))
+              #'(LAMBDA (E) V1878)))
+
+(DEFUN hdv (V1881)
+  (trap-error (<-vector V1881 1)
+              #'(LAMBDA (E)
+                  (simple-error
+                   (cn "hdv needs a non-empty vector as an argument; not "
+                       (shen.app V1881 "
+"
+                        'shen.s))))))
+
+(DEFUN tlv (V1882)
+  (LET ((Limit (limit V1882)))
+    (IF (shen.ABSEQUAL Limit 0)
+        (simple-error "cannot take the tail of the empty vector
+")
+        (IF (shen.ABSEQUAL Limit 1)
+            (vector 0)
+            (LET ((NewVector (vector (1- Limit))))
+              (shen.tlv-help V1882 2 Limit (vector (1- Limit))))))))
+
+(DEFUN shen.tlv-help (V1883 V1884 V1885 V1886)
+  (COND
+   ((shen.ABSEQUAL V1885 V1884)
+    (shen.copyfromvector V1883 V1886 V1885 (1- V1885)))
+   (T
+    (shen.tlv-help V1883 (1+ V1884) V1885
+     (shen.copyfromvector V1883 V1886 V1884 (1- V1884))))))
+
+(DEFUN assoc (V1896 V1897)
+  (COND ((NULL V1897) NIL)
+        ((AND (CONSP V1897)
+              (AND (CONSP (CAR V1897))
+                   (shen.ABSEQUAL (CAR (CAR V1897)) V1896)))
+         (CAR V1897))
+        ((CONSP V1897) (assoc V1896 (CDR V1897))) (T (shen.sys-error 'assoc))))
+
+(DEFUN boolean? (V1903)
+  (COND ((EQ 'true V1903) 'true) ((EQ 'false V1903) 'true) (T 'false)))
+
+(DEFUN nl (V1904)
+  (COND ((shen.ABSEQUAL 0 V1904) 0)
+        (T
+         (do
+          (shen.prhush "
+"
+           (stoutput))
+          (nl (1- V1904))))))
+
+(DEFUN difference (V1907 V1908)
+  (COND ((NULL V1907) NIL)
+        ((CONSP V1907)
+         (IF (shen.wrapper (element? (CAR V1907) V1908))
+             (difference (CDR V1907) V1908)
+             (CONS (CAR V1907) (difference (CDR V1907) V1908))))
+        (T (shen.sys-error 'difference))))
+
+(DEFUN do (V1909 V1910) V1910)
+
+(DEFUN element? (V1919 V1920)
+  (COND ((NULL V1920) 'false)
+        ((AND (CONSP V1920) (shen.ABSEQUAL (CAR V1920) V1919)) 'true)
+        ((CONSP V1920) (element? V1919 (CDR V1920)))
+        (T (shen.sys-error 'element?))))
+
+(DEFUN empty? (V1926) (COND ((NULL V1926) 'true) (T 'false)))
+
+(DEFUN fix (V1927 V1928)
+  (shen.fix-help V1927 V1928
+   (let Args (LIST V1928)
+        (let NewF (shen.maplispsym V1927)
+             (trap-error (APPLY NewF Args)
+                         (lambda E
+                                 (COND
+                                  ((shen.arity-error? V1927 Args)
+                                   (shen.funcall
+                                    (EVAL (shen.nest-lambda V1927 NewF)) Args))
+                                  ((EQ NewF 'or)
+                                   (shen.funcall
+                                    (lambda X1 (lambda X2 (or X1 X2))) Args))
+                                  ((EQ NewF 'and)
+                                   (shen.funcall
+                                    (lambda X1 (lambda X2 (and X1 X2))) Args))
+                                  ((EQ NewF 'trap-error)
+                                   (shen.funcall
+                                    (lambda X1 (lambda X2 (trap-error X1 X2)))
+                                    Args))
+                                  ((shen.bad-lambda-call? NewF Args)
+                                   (shen.funcall NewF Args))
+                                  (T (shen.relay-error E)))))))))
+
+(DEFUN shen.fix-help (V1935 V1936 V1937)
+  (COND ((shen.ABSEQUAL V1937 V1936) V1937)
+        (T
+         (shen.fix-help V1935 V1937
+          (let Args (LIST V1937)
+               (let NewF (shen.maplispsym V1935)
+                    (trap-error (APPLY NewF Args)
+                                (lambda E
+                                        (COND
+                                         ((shen.arity-error? V1935 Args)
+                                          (shen.funcall
+                                           (EVAL (shen.nest-lambda V1935 NewF))
+                                           Args))
+                                         ((EQ NewF 'or)
+                                          (shen.funcall
+                                           (lambda X1 (lambda X2 (or X1 X2)))
+                                           Args))
+                                         ((EQ NewF 'and)
+                                          (shen.funcall
+                                           (lambda X1 (lambda X2 (and X1 X2)))
+                                           Args))
+                                         ((EQ NewF 'trap-error)
+                                          (shen.funcall
+                                           (lambda X1
+                                                   (lambda X2
+                                                           (trap-error X1 X2)))
+                                           Args))
+                                         ((shen.bad-lambda-call? NewF Args)
+                                          (shen.funcall NewF Args))
+                                         (T (shen.relay-error E)))))))))))
+
+(DEFUN put (V1939 V1940 V1941 V1942)
+  (LET ((N (hash V1939 (limit V1942))))
+    (LET ((Entry (trap-error (<-vector V1942 N) #'(LAMBDA (E) NIL))))
+      (LET ((Change
+             (vector-> V1942 N
+              (shen.change-pointer-value V1939 V1940 V1941 Entry))))
+        V1941))))
+
+(DEFUN shen.change-pointer-value (V1945 V1946 V1947 V1948)
+  (COND ((NULL V1948) (CONS (CONS (CONS V1945 (CONS V1946 NIL)) V1947) NIL))
+        ((AND (CONSP V1948)
+              (AND (CONSP (CAR V1948))
+                   (AND (CONSP (CAR (CAR V1948)))
+                        (AND (CONSP (CDR (CAR (CAR V1948))))
+                             (AND (NULL (CDR (CDR (CAR (CAR V1948)))))
+                                  (AND
+                                   (shen.ABSEQUAL (CAR (CDR (CAR (CAR V1948))))
+                                                  V1946)
+                                   (shen.ABSEQUAL (CAR (CAR (CAR V1948)))
+                                                  V1945)))))))
+         (CONS (CONS (CAR (CAR V1948)) V1947) (CDR V1948)))
+        ((CONSP V1948)
+         (CONS (CAR V1948)
+               (shen.change-pointer-value V1945 V1946 V1947 (CDR V1948))))
+        (T (shen.sys-error 'shen.change-pointer-value))))
+
+(DEFUN get (V1951 V1952 V1953)
+  (LET ((N (hash V1951 (limit V1953))))
+    (LET ((Entry
+           (trap-error (<-vector V1953 N)
+                       #'(LAMBDA (E)
+                           (simple-error "pointer not found
+")))))
+      (LET ((Result (assoc (CONS V1951 (CONS V1952 NIL)) Entry)))
+        (IF (NULL Result)
+            (simple-error "value not found
+")
+            (CDR Result))))))
+
+(DEFUN hash (V1954 V1955)
+  (LET ((Hash
+         (shen.mod
+          (sum (map #'(LAMBDA (V1808) (string->n V1808)) (explode V1954)))
+          V1955)))
+    (IF (shen.ABSEQUAL 0 Hash)
+        1
+        Hash)))
+
+(DEFUN shen.mod (V1956 V1957)
+  (shen.modh V1956 (shen.multiples V1956 (CONS V1957 NIL))))
+
+(DEFUN shen.multiples (V1958 V1959)
+  (COND
+   ((AND (CONSP V1959) (shen.wrapper (shen.greater? (CAR V1959) V1958)))
+    (CDR V1959))
+   ((CONSP V1959)
+    (shen.multiples V1958 (CONS (shen.multiply 2 (CAR V1959)) V1959)))
+   (T (shen.sys-error 'shen.multiples))))
+
+(DEFUN shen.modh (V1962 V1963)
+  (COND ((shen.ABSEQUAL 0 V1962) 0) ((NULL V1963) V1962)
+        ((AND (CONSP V1963) (shen.wrapper (shen.greater? (CAR V1963) V1962)))
+         (IF (NULL (CDR V1963))
+             V1962
+             (shen.modh V1962 (CDR V1963))))
+        ((CONSP V1963) (shen.modh (shen.subtract V1962 (CAR V1963)) V1963))
+        (T (shen.sys-error 'shen.modh))))
+
+(DEFUN sum (V1964)
+  (COND ((NULL V1964) 0)
+        ((CONSP V1964) (shen.add (CAR V1964) (sum (CDR V1964))))
+        (T (shen.sys-error 'sum))))
+
+(DEFUN head (V1971)
+  (COND ((CONSP V1971) (CAR V1971))
+        (T (simple-error "head expects a non-empty list"))))
+
+(DEFUN tail (V1978)
+  (COND ((CONSP V1978) (CDR V1978))
+        (T (simple-error "tail expects a non-empty list"))))
+
+(DEFUN hdstr (V1979) (pos V1979 0))
+
+(DEFUN intersection (V1982 V1983)
+  (COND ((NULL V1982) NIL)
+        ((CONSP V1982)
+         (IF (shen.wrapper (element? (CAR V1982) V1983))
+             (CONS (CAR V1982) (intersection (CDR V1982) V1983))
+             (intersection (CDR V1982) V1983)))
+        (T (shen.sys-error 'intersection))))
+
+(DEFUN reverse (V1984) (shen.reverse_help V1984 NIL))
+
+(DEFUN shen.reverse_help (V1985 V1986)
+  (COND ((NULL V1985) V1986)
+        ((CONSP V1985)
+         (shen.reverse_help (CDR V1985) (CONS (CAR V1985) V1986)))
+        (T (shen.sys-error 'shen.reverse_help))))
+
+(DEFUN union (V1987 V1988)
+  (COND ((NULL V1987) V1988)
+        ((CONSP V1987)
+         (IF (shen.wrapper (element? (CAR V1987) V1988))
+             (union (CDR V1987) V1988)
+             (CONS (CAR V1987) (union (CDR V1987) V1988))))
+        (T (shen.sys-error 'union))))
+
+(DEFUN y-or-n? (V1989)
+  (LET ((Message (shen.prhush (shen.proc-nl V1989) (stoutput))))
+    (LET ((Y-or-N (shen.prhush " (y/n) " (stoutput))))
+      (LET ((Input (shen.app (read (stinput)) "" 'shen.s)))
+        (IF (EQUAL "y" Input)
+            'true
+            (IF (EQUAL "n" Input)
+                'false
+                (do
+                 (shen.prhush "please answer y or n
+"
+                  (stoutput))
+                 (y-or-n? V1989))))))))
+
+(DEFUN not (V1990)
+  (IF (shen.wrapper V1990)
+      'false
+      'true))
+
+(DEFUN subst (V1999 V2000 V2001)
+  (COND ((shen.ABSEQUAL V2001 V2000) V1999)
+        ((CONSP V2001)
+         (CONS (subst V1999 V2000 (CAR V2001))
+               (subst V1999 V2000 (CDR V2001))))
+        (T V2001)))
+
+(DEFUN explode (V2003) (shen.explode-h (shen.app V2003 "" 'shen.a)))
+
+(DEFUN shen.explode-h (V2004)
+  (COND ((EQUAL "" V2004) NIL)
+        ((shen.wrapper (shen.+string? V2004))
+         (CONS (pos V2004 0) (shen.explode-h (tlstr V2004))))
+        (T (shen.sys-error 'shen.explode-h))))
+
+(DEFUN cd (V2005)
+  (set '*home-directory*
+       (IF (EQUAL V2005 "")
+           ""
+           (shen.app V2005 "/" 'shen.a))))
+
+(DEFUN map (V2006 V2007) (shen.map-h V2006 V2007 NIL))
+
+(DEFUN shen.map-h (V2010 V2011 V2012)
+  (COND ((NULL V2011) (REVERSE V2012))
+        ((CONSP V2011)
+         (shen.map-h V2010 (CDR V2011)
+          (CONS
+           (let Args (LIST (CAR V2011))
+                (let NewF (shen.maplispsym V2010)
+                     (trap-error (APPLY NewF Args)
+                                 (lambda E
+                                         (COND
+                                          ((shen.arity-error? V2010 Args)
+                                           (shen.funcall
+                                            (EVAL
+                                             (shen.nest-lambda V2010 NewF))
+                                            Args))
+                                          ((EQ NewF 'or)
+                                           (shen.funcall
+                                            (lambda X1 (lambda X2 (or X1 X2)))
+                                            Args))
+                                          ((EQ NewF 'and)
+                                           (shen.funcall
+                                            (lambda X1 (lambda X2 (and X1 X2)))
+                                            Args))
+                                          ((EQ NewF 'trap-error)
+                                           (shen.funcall
+                                            (lambda X1
+                                                    (lambda X2
+                                                            (trap-error X1
+                                                                        X2)))
+                                            Args))
+                                          ((shen.bad-lambda-call? NewF Args)
+                                           (shen.funcall NewF Args))
+                                          (T (shen.relay-error E)))))))
+           V2012)))
+        (T (shen.sys-error 'shen.map-h))))
+
+(DEFUN length (V2013) (shen.length-h V2013 0))
+
+(DEFUN shen.length-h (V2014 V2015)
+  (COND ((NULL V2014) V2015) (T (shen.length-h (CDR V2014) (1+ V2015)))))
+
+(DEFUN occurrences (V2024 V2025)
+  (COND ((shen.ABSEQUAL V2025 V2024) 1)
+        ((CONSP V2025)
+         (shen.add (occurrences V2024 (CAR V2025))
+                   (occurrences V2024 (CDR V2025))))
+        (T 0)))
+
+(DEFUN nth (V2033 V2034)
+  (COND ((AND (shen.ABSEQUAL 1 V2033) (CONSP V2034)) (CAR V2034))
+        ((CONSP V2034) (nth (1- V2033) (CDR V2034))) (T (shen.sys-error 'nth))))
+
+(DEFUN integer? (V2035)
+  (and (number? V2035)
+       (LET ((Abs (shen.abs V2035)))
+         (shen.integer-test? Abs (shen.magless Abs 1)))))
+
+(DEFUN shen.abs (V2036)
+  (IF (shen.wrapper (shen.greater? V2036 0))
+      V2036
+      (shen.subtract 0 V2036)))
+
+(DEFUN shen.magless (V2037 V2038)
+  (LET ((Nx2 (shen.multiply V2038 2)))
+    (IF (shen.wrapper (shen.greater? Nx2 V2037))
+        V2038
+        (shen.magless V2037 Nx2))))
+
+(DEFUN shen.integer-test? (V2042 V2043)
+  (COND ((shen.ABSEQUAL 0 V2042) 'true)
+        ((shen.wrapper (shen.greater? 1 V2042)) 'false)
+        (T
+         (LET ((Abs-N (shen.subtract V2042 V2043)))
+           (IF (shen.wrapper (shen.greater? 0 Abs-N))
+               (integer? V2042)
+               (shen.integer-test? Abs-N V2043))))))
+
+(DEFUN mapcan (V2046 V2047)
+  (COND ((NULL V2047) NIL)
+        ((CONSP V2047)
+         (APPEND
+          (let Args (LIST (CAR V2047))
+               (let NewF (shen.maplispsym V2046)
+                    (trap-error (APPLY NewF Args)
+                                (lambda E
+                                        (COND
+                                         ((shen.arity-error? V2046 Args)
+                                          (shen.funcall
+                                           (EVAL (shen.nest-lambda V2046 NewF))
+                                           Args))
+                                         ((EQ NewF 'or)
+                                          (shen.funcall
+                                           (lambda X1 (lambda X2 (or X1 X2)))
+                                           Args))
+                                         ((EQ NewF 'and)
+                                          (shen.funcall
+                                           (lambda X1 (lambda X2 (and X1 X2)))
+                                           Args))
+                                         ((EQ NewF 'trap-error)
+                                          (shen.funcall
+                                           (lambda X1
+                                                   (lambda X2
+                                                           (trap-error X1 X2)))
+                                           Args))
+                                         ((shen.bad-lambda-call? NewF Args)
+                                          (shen.funcall NewF Args))
+                                         (T (shen.relay-error E)))))))
+          (mapcan V2046 (CDR V2047))))
+        (T (shen.sys-error 'mapcan))))
+
+(DEFUN == (V2056 V2057) (COND ((shen.ABSEQUAL V2057 V2056) 'true) (T 'false)))
+
+(DEFUN abort () (simple-error ""))
+
+(DEFUN bound? (V2059)
+  (and (symbol? V2059)
+       (LET ((Val
+              (trap-error (value V2059)
+                          #'(LAMBDA (E) 'shen.this-symbol-is-unbound))))
+         (IF (EQ Val 'shen.this-symbol-is-unbound)
+             'false
+             'true))))
+
+(DEFUN shen.string->bytes (V2060)
+  (COND ((EQUAL "" V2060) NIL)
+        (T
+         (CONS (string->n (pos V2060 0)) (shen.string->bytes (tlstr V2060))))))
+
+(DEFUN maxinferences (V2061) (set 'shen.*maxinferences* V2061))
+
+(DEFUN inferences () shen.*infs*)
+
+(DEFUN protect (V2062) V2062)
+
+(DEFUN stoutput () *stoutput*)
+
+(DEFUN string->symbol (V2063)
+  (LET ((Symbol (intern V2063)))
+    (IF (shen.wrapper (symbol? Symbol))
+        Symbol
+        (simple-error
+         (cn "cannot intern " (shen.app V2063 " to a symbol" 'shen.s))))))
+
+(DEFUN shen.optimise (V2068)
+  (COND ((EQ '+ V2068) (set 'shen.*optimise* 'true))
+        ((EQ '- V2068) (set 'shen.*optimise* 'false))
+        (T
+         (simple-error "optimise expects a + or a -.
+"))))
+
+(DEFUN os () *os*)
+
+(DEFUN language () *language*)
+
+(DEFUN version () *version*)
+
+(DEFUN port () *port*)
+
+(DEFUN porters () *porters*)
+
+(DEFUN implementation () *implementation*)
+
+(DEFUN release () *release*)
+

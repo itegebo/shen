@@ -1,0 +1,1 @@
+clisp.exe -M Shen.mem -q -m 10MB

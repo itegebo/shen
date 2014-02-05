@@ -1,0 +1,1 @@
+sbcl.exe --core sbcl.core

@@ -1,0 +1,756 @@
+
+"**********************************************************************************
+*                           The License						                                      *
+* 										                                                                  *
+* The user is free to produce commercial applications with the software, to 	          *
+* distribute these applications in source or binary  form, and to charge monies         *
+* for them as he sees fit and in concordance with the laws of the land subject 	        *
+* to the following license.							                                                *
+*										                                                                    * 
+* 1. The license applies to all the software and all derived software and 	            *
+*    must appear on such.							                                                  *
+*										                                                                    *
+* 2. It is illegal to distribute the software without this license attached	            *
+*    to it and use of the software implies agreement with the license as such.          *
+*    It is illegal for anyone who is not the copyright holder to tamper with 	          *
+*    or change the license.							                                                *
+*										                                                                    *
+* 3. Neither the names of Lambda Associates or the copyright holder may be used         *
+*    to endorse or promote products built using the software without specific 	        *
+*    prior written permission from the copyright holder.		                            *
+*										                                                                    *
+* 4. That possession of this license does not confer on the copyright holder 	          *
+*    any special contractual obligation towards the user. That in no event 	            * 
+*    shall the copyright holder be liable for any direct, indirect, incidental,        *   
+*    special, exemplary or consequential damages (including but not limited             *
+*    to procurement of substitute goods or services, loss of use, data, 	              * 
+*    interruption), however caused and on any theory of liability, whether in	          * 
+*    contract, strict liability or tort (including negligence) arising in any         	*
+*    way out of the use of the software, even if advised of the possibility of         	*
+*    such damage.						                                                        		* 
+*										                                                                    *
+* 5. It is permitted for the user to change the software, for the purpose of 	          *
+*    improving performance, correcting an error, or porting to a new platform, 	        *
+*    and distribute the derived version of Shen provided the resulting program 	        *
+*    conforms in all respects to the Shen standard and is issued under that             * 
+*    title. The user must make it clear with his distribution that he/she is 	          *
+*    the author of the changes and what these changes are and why. 		                  *
+*										                                                                    *
+* 6. Derived versions of this software in whatever form are subject to the same         *
+*    restrictions. In particular it is not permitted to make derived copies of          *
+*    this software which do not conform to the Shen standard or appear under a          *
+*    different title.								                                                    *
+*										                                                                    *
+*    It is permitted to distribute versions of Shen which incorporate libraries,        *
+*    graphics or other facilities which are not part of the Shen standard.	            *
+*										                                                                    *
+* For an explication of this license see www.shenlanguage.org/license.htm which         *
+* explains this license in full.                                                        *
+*				 						                                                                    *
+*****************************************************************************************
+"
+
+(DEFUN shen.datatype-error (V1639)
+  (COND
+   ((AND (CONSP V1639) (AND (CONSP (CDR V1639)) (NULL (CDR (CDR V1639)))))
+    (simple-error
+     (cn "datatype syntax error here:
+
+ "
+         (shen.app (shen.next-50 50 (CAR V1639)) "
+"
+          'shen.a))))
+   (T (shen.sys-error 'shen.datatype-error))))
+
+(DEFUN shen.<datatype-rules> (V1644)
+  (LET ((Result
+         (LET ((Parse_shen.<datatype-rule> (shen.<datatype-rule> V1644)))
+           (IF (NOT (EQ (fail) Parse_shen.<datatype-rule>))
+               (LET ((Parse_shen.<datatype-rules>
+                      (shen.<datatype-rules> Parse_shen.<datatype-rule>)))
+                 (IF (NOT (EQ (fail) Parse_shen.<datatype-rules>))
+                     (shen.pair (CAR Parse_shen.<datatype-rules>)
+                      (CONS (shen.hdtl Parse_shen.<datatype-rule>)
+                            (shen.hdtl Parse_shen.<datatype-rules>)))
+                     (fail)))
+               (fail)))))
+    (IF (EQ Result (fail))
+        (LET ((Result
+               (LET ((Parse_<e> (<e> V1644)))
+                 (IF (NOT (EQ (fail) Parse_<e>))
+                     (shen.pair (CAR Parse_<e>) NIL)
+                     (fail)))))
+          (IF (EQ Result (fail))
+              (fail)
+              Result))
+        Result)))
+
+(DEFUN shen.<datatype-rule> (V1649)
+  (LET ((Result
+         (LET ((Parse_shen.<side-conditions> (shen.<side-conditions> V1649)))
+           (IF (NOT (EQ (fail) Parse_shen.<side-conditions>))
+               (LET ((Parse_shen.<premises>
+                      (shen.<premises> Parse_shen.<side-conditions>)))
+                 (IF (NOT (EQ (fail) Parse_shen.<premises>))
+                     (LET ((Parse_shen.<singleunderline>
+                            (shen.<singleunderline> Parse_shen.<premises>)))
+                       (IF (NOT (EQ (fail) Parse_shen.<singleunderline>))
+                           (LET ((Parse_shen.<conclusion>
+                                  (shen.<conclusion>
+                                   Parse_shen.<singleunderline>)))
+                             (IF (NOT (EQ (fail) Parse_shen.<conclusion>))
+                                 (shen.pair (CAR Parse_shen.<conclusion>)
+                                  (shen.sequent 'shen.single
+                                   (CONS
+                                    (shen.hdtl Parse_shen.<side-conditions>)
+                                    (CONS (shen.hdtl Parse_shen.<premises>)
+                                          (CONS
+                                           (shen.hdtl Parse_shen.<conclusion>)
+                                           NIL)))))
+                                 (fail)))
+                           (fail)))
+                     (fail)))
+               (fail)))))
+    (IF (EQ Result (fail))
+        (LET ((Result
+               (LET ((Parse_shen.<side-conditions>
+                      (shen.<side-conditions> V1649)))
+                 (IF (NOT (EQ (fail) Parse_shen.<side-conditions>))
+                     (LET ((Parse_shen.<premises>
+                            (shen.<premises> Parse_shen.<side-conditions>)))
+                       (IF (NOT (EQ (fail) Parse_shen.<premises>))
+                           (LET ((Parse_shen.<doubleunderline>
+                                  (shen.<doubleunderline>
+                                   Parse_shen.<premises>)))
+                             (IF (NOT (EQ (fail) Parse_shen.<doubleunderline>))
+                                 (LET ((Parse_shen.<conclusion>
+                                        (shen.<conclusion>
+                                         Parse_shen.<doubleunderline>)))
+                                   (IF (NOT
+                                        (EQ (fail) Parse_shen.<conclusion>))
+                                       (shen.pair (CAR Parse_shen.<conclusion>)
+                                        (shen.sequent 'shen.double
+                                         (CONS
+                                          (shen.hdtl
+                                           Parse_shen.<side-conditions>)
+                                          (CONS
+                                           (shen.hdtl Parse_shen.<premises>)
+                                           (CONS
+                                            (shen.hdtl Parse_shen.<conclusion>)
+                                            NIL)))))
+                                       (fail)))
+                                 (fail)))
+                           (fail)))
+                     (fail)))))
+          (IF (EQ Result (fail))
+              (fail)
+              Result))
+        Result)))
+
+(DEFUN shen.<side-conditions> (V1654)
+  (LET ((Result
+         (LET ((Parse_shen.<side-condition> (shen.<side-condition> V1654)))
+           (IF (NOT (EQ (fail) Parse_shen.<side-condition>))
+               (LET ((Parse_shen.<side-conditions>
+                      (shen.<side-conditions> Parse_shen.<side-condition>)))
+                 (IF (NOT (EQ (fail) Parse_shen.<side-conditions>))
+                     (shen.pair (CAR Parse_shen.<side-conditions>)
+                      (CONS (shen.hdtl Parse_shen.<side-condition>)
+                            (shen.hdtl Parse_shen.<side-conditions>)))
+                     (fail)))
+               (fail)))))
+    (IF (EQ Result (fail))
+        (LET ((Result
+               (LET ((Parse_<e> (<e> V1654)))
+                 (IF (NOT (EQ (fail) Parse_<e>))
+                     (shen.pair (CAR Parse_<e>) NIL)
+                     (fail)))))
+          (IF (EQ Result (fail))
+              (fail)
+              Result))
+        Result)))
+
+(DEFUN shen.<side-condition> (V1659)
+  (LET ((Result
+         (IF (AND (CONSP (CAR V1659)) (EQ 'if (CAR (CAR V1659))))
+             (LET ((Parse_shen.<expr>
+                    (shen.<expr>
+                     (shen.pair (CDR (CAR V1659)) (shen.hdtl V1659)))))
+               (IF (NOT (EQ (fail) Parse_shen.<expr>))
+                   (shen.pair (CAR Parse_shen.<expr>)
+                    (CONS 'if (CONS (shen.hdtl Parse_shen.<expr>) NIL)))
+                   (fail)))
+             (fail))))
+    (IF (EQ Result (fail))
+        (LET ((Result
+               (IF (AND (CONSP (CAR V1659)) (EQ 'let (CAR (CAR V1659))))
+                   (LET ((Parse_shen.<variable?>
+                          (shen.<variable?>
+                           (shen.pair (CDR (CAR V1659)) (shen.hdtl V1659)))))
+                     (IF (NOT (EQ (fail) Parse_shen.<variable?>))
+                         (LET ((Parse_shen.<expr>
+                                (shen.<expr> Parse_shen.<variable?>)))
+                           (IF (NOT (EQ (fail) Parse_shen.<expr>))
+                               (shen.pair (CAR Parse_shen.<expr>)
+                                (CONS 'let
+                                      (CONS (shen.hdtl Parse_shen.<variable?>)
+                                            (CONS (shen.hdtl Parse_shen.<expr>)
+                                                  NIL))))
+                               (fail)))
+                         (fail)))
+                   (fail))))
+          (IF (EQ Result (fail))
+              (fail)
+              Result))
+        Result)))
+
+(DEFUN shen.<variable?> (V1664)
+  (LET ((Result
+         (IF (CONSP (CAR V1664))
+             (LET ((Parse_X (CAR (CAR V1664))))
+               (IF (shen.wrapper (variable? Parse_X))
+                   (shen.pair
+                    (CAR (shen.pair (CDR (CAR V1664)) (shen.hdtl V1664)))
+                    Parse_X)
+                   (fail)))
+             (fail))))
+    (IF (EQ Result (fail))
+        (fail)
+        Result)))
+
+(DEFUN shen.<expr> (V1669)
+  (LET ((Result
+         (IF (CONSP (CAR V1669))
+             (LET ((Parse_X (CAR (CAR V1669))))
+               (IF (NOT
+                    (OR
+                     (shen.wrapper
+                      (element? Parse_X (CONS '>> (CONS '|;| NIL))))
+                     (OR (shen.wrapper (shen.singleunderline? Parse_X))
+                         (shen.wrapper (shen.doubleunderline? Parse_X)))))
+                   (shen.pair
+                    (CAR (shen.pair (CDR (CAR V1669)) (shen.hdtl V1669)))
+                    (shen.remove-bar Parse_X))
+                   (fail)))
+             (fail))))
+    (IF (EQ Result (fail))
+        (fail)
+        Result)))
+
+(DEFUN shen.remove-bar (V1670)
+  (COND
+   ((AND (CONSP V1670)
+         (AND (CONSP (CDR V1670))
+              (AND (CONSP (CDR (CDR V1670)))
+                   (AND (NULL (CDR (CDR (CDR V1670))))
+                        (EQ (CAR (CDR V1670)) 'bar!)))))
+    (CONS (CAR V1670) (CAR (CDR (CDR V1670)))))
+   ((CONSP V1670)
+    (CONS (shen.remove-bar (CAR V1670)) (shen.remove-bar (CDR V1670))))
+   (T V1670)))
+
+(DEFUN shen.<premises> (V1675)
+  (LET ((Result
+         (LET ((Parse_shen.<premise> (shen.<premise> V1675)))
+           (IF (NOT (EQ (fail) Parse_shen.<premise>))
+               (LET ((Parse_shen.<semicolon-symbol>
+                      (shen.<semicolon-symbol> Parse_shen.<premise>)))
+                 (IF (NOT (EQ (fail) Parse_shen.<semicolon-symbol>))
+                     (LET ((Parse_shen.<premises>
+                            (shen.<premises> Parse_shen.<semicolon-symbol>)))
+                       (IF (NOT (EQ (fail) Parse_shen.<premises>))
+                           (shen.pair (CAR Parse_shen.<premises>)
+                            (CONS (shen.hdtl Parse_shen.<premise>)
+                                  (shen.hdtl Parse_shen.<premises>)))
+                           (fail)))
+                     (fail)))
+               (fail)))))
+    (IF (EQ Result (fail))
+        (LET ((Result
+               (LET ((Parse_<e> (<e> V1675)))
+                 (IF (NOT (EQ (fail) Parse_<e>))
+                     (shen.pair (CAR Parse_<e>) NIL)
+                     (fail)))))
+          (IF (EQ Result (fail))
+              (fail)
+              Result))
+        Result)))
+
+(DEFUN shen.<semicolon-symbol> (V1680)
+  (LET ((Result
+         (IF (CONSP (CAR V1680))
+             (LET ((Parse_X (CAR (CAR V1680))))
+               (IF (EQ Parse_X '|;|)
+                   (shen.pair
+                    (CAR (shen.pair (CDR (CAR V1680)) (shen.hdtl V1680)))
+                    'shen.skip)
+                   (fail)))
+             (fail))))
+    (IF (EQ Result (fail))
+        (fail)
+        Result)))
+
+(DEFUN shen.<premise> (V1685)
+  (LET ((Result
+         (IF (AND (CONSP (CAR V1685)) (EQ '! (CAR (CAR V1685))))
+             (shen.pair (CAR (shen.pair (CDR (CAR V1685)) (shen.hdtl V1685)))
+              '!)
+             (fail))))
+    (IF (EQ Result (fail))
+        (LET ((Result
+               (LET ((Parse_shen.<formulae> (shen.<formulae> V1685)))
+                 (IF (NOT (EQ (fail) Parse_shen.<formulae>))
+                     (IF (AND (CONSP (CAR Parse_shen.<formulae>))
+                              (EQ '>> (CAR (CAR Parse_shen.<formulae>))))
+                         (LET ((Parse_shen.<formula>
+                                (shen.<formula>
+                                 (shen.pair (CDR (CAR Parse_shen.<formulae>))
+                                  (shen.hdtl Parse_shen.<formulae>)))))
+                           (IF (NOT (EQ (fail) Parse_shen.<formula>))
+                               (shen.pair (CAR Parse_shen.<formula>)
+                                (shen.sequent (shen.hdtl Parse_shen.<formulae>)
+                                 (shen.hdtl Parse_shen.<formula>)))
+                               (fail)))
+                         (fail))
+                     (fail)))))
+          (IF (EQ Result (fail))
+              (LET ((Result
+                     (LET ((Parse_shen.<formula> (shen.<formula> V1685)))
+                       (IF (NOT (EQ (fail) Parse_shen.<formula>))
+                           (shen.pair (CAR Parse_shen.<formula>)
+                            (shen.sequent NIL
+                             (shen.hdtl Parse_shen.<formula>)))
+                           (fail)))))
+                (IF (EQ Result (fail))
+                    (fail)
+                    Result))
+              Result))
+        Result)))
+
+(DEFUN shen.<conclusion> (V1690)
+  (LET ((Result
+         (LET ((Parse_shen.<formulae> (shen.<formulae> V1690)))
+           (IF (NOT (EQ (fail) Parse_shen.<formulae>))
+               (IF (AND (CONSP (CAR Parse_shen.<formulae>))
+                        (EQ '>> (CAR (CAR Parse_shen.<formulae>))))
+                   (LET ((Parse_shen.<formula>
+                          (shen.<formula>
+                           (shen.pair (CDR (CAR Parse_shen.<formulae>))
+                            (shen.hdtl Parse_shen.<formulae>)))))
+                     (IF (NOT (EQ (fail) Parse_shen.<formula>))
+                         (LET ((Parse_shen.<semicolon-symbol>
+                                (shen.<semicolon-symbol> Parse_shen.<formula>)))
+                           (IF (NOT (EQ (fail) Parse_shen.<semicolon-symbol>))
+                               (shen.pair (CAR Parse_shen.<semicolon-symbol>)
+                                (shen.sequent (shen.hdtl Parse_shen.<formulae>)
+                                 (shen.hdtl Parse_shen.<formula>)))
+                               (fail)))
+                         (fail)))
+                   (fail))
+               (fail)))))
+    (IF (EQ Result (fail))
+        (LET ((Result
+               (LET ((Parse_shen.<formula> (shen.<formula> V1690)))
+                 (IF (NOT (EQ (fail) Parse_shen.<formula>))
+                     (LET ((Parse_shen.<semicolon-symbol>
+                            (shen.<semicolon-symbol> Parse_shen.<formula>)))
+                       (IF (NOT (EQ (fail) Parse_shen.<semicolon-symbol>))
+                           (shen.pair (CAR Parse_shen.<semicolon-symbol>)
+                            (shen.sequent NIL
+                             (shen.hdtl Parse_shen.<formula>)))
+                           (fail)))
+                     (fail)))))
+          (IF (EQ Result (fail))
+              (fail)
+              Result))
+        Result)))
+
+(DEFUN shen.sequent (V1691 V1692) (@p V1691 V1692))
+
+(DEFUN shen.<formulae> (V1697)
+  (LET ((Result
+         (LET ((Parse_shen.<formula> (shen.<formula> V1697)))
+           (IF (NOT (EQ (fail) Parse_shen.<formula>))
+               (LET ((Parse_shen.<comma-symbol>
+                      (shen.<comma-symbol> Parse_shen.<formula>)))
+                 (IF (NOT (EQ (fail) Parse_shen.<comma-symbol>))
+                     (LET ((Parse_shen.<formulae>
+                            (shen.<formulae> Parse_shen.<comma-symbol>)))
+                       (IF (NOT (EQ (fail) Parse_shen.<formulae>))
+                           (shen.pair (CAR Parse_shen.<formulae>)
+                            (CONS (shen.hdtl Parse_shen.<formula>)
+                                  (shen.hdtl Parse_shen.<formulae>)))
+                           (fail)))
+                     (fail)))
+               (fail)))))
+    (IF (EQ Result (fail))
+        (LET ((Result
+               (LET ((Parse_shen.<formula> (shen.<formula> V1697)))
+                 (IF (NOT (EQ (fail) Parse_shen.<formula>))
+                     (shen.pair (CAR Parse_shen.<formula>)
+                      (CONS (shen.hdtl Parse_shen.<formula>) NIL))
+                     (fail)))))
+          (IF (EQ Result (fail))
+              (LET ((Result
+                     (LET ((Parse_<e> (<e> V1697)))
+                       (IF (NOT (EQ (fail) Parse_<e>))
+                           (shen.pair (CAR Parse_<e>) NIL)
+                           (fail)))))
+                (IF (EQ Result (fail))
+                    (fail)
+                    Result))
+              Result))
+        Result)))
+
+(DEFUN shen.<comma-symbol> (V1702)
+  (LET ((Result
+         (IF (CONSP (CAR V1702))
+             (LET ((Parse_X (CAR (CAR V1702))))
+               (IF (shen.ABSEQUAL Parse_X (intern ","))
+                   (shen.pair
+                    (CAR (shen.pair (CDR (CAR V1702)) (shen.hdtl V1702)))
+                    'shen.skip)
+                   (fail)))
+             (fail))))
+    (IF (EQ Result (fail))
+        (fail)
+        Result)))
+
+(DEFUN shen.<formula> (V1707)
+  (LET ((Result
+         (LET ((Parse_shen.<expr> (shen.<expr> V1707)))
+           (IF (NOT (EQ (fail) Parse_shen.<expr>))
+               (IF (AND (CONSP (CAR Parse_shen.<expr>))
+                        (EQ '|:| (CAR (CAR Parse_shen.<expr>))))
+                   (LET ((Parse_shen.<type>
+                          (shen.<type>
+                           (shen.pair (CDR (CAR Parse_shen.<expr>))
+                            (shen.hdtl Parse_shen.<expr>)))))
+                     (IF (NOT (EQ (fail) Parse_shen.<type>))
+                         (shen.pair (CAR Parse_shen.<type>)
+                          (CONS (shen.curry (shen.hdtl Parse_shen.<expr>))
+                                (CONS '|:|
+                                      (CONS
+                                       (shen.demodulate
+                                        (shen.hdtl Parse_shen.<type>))
+                                       NIL))))
+                         (fail)))
+                   (fail))
+               (fail)))))
+    (IF (EQ Result (fail))
+        (LET ((Result
+               (LET ((Parse_shen.<expr> (shen.<expr> V1707)))
+                 (IF (NOT (EQ (fail) Parse_shen.<expr>))
+                     (shen.pair (CAR Parse_shen.<expr>)
+                      (shen.hdtl Parse_shen.<expr>))
+                     (fail)))))
+          (IF (EQ Result (fail))
+              (fail)
+              Result))
+        Result)))
+
+(DEFUN shen.<type> (V1712)
+  (LET ((Result
+         (LET ((Parse_shen.<expr> (shen.<expr> V1712)))
+           (IF (NOT (EQ (fail) Parse_shen.<expr>))
+               (shen.pair (CAR Parse_shen.<expr>)
+                (shen.curry-type (shen.hdtl Parse_shen.<expr>)))
+               (fail)))))
+    (IF (EQ Result (fail))
+        (fail)
+        Result)))
+
+(DEFUN shen.<doubleunderline> (V1717)
+  (LET ((Result
+         (IF (CONSP (CAR V1717))
+             (LET ((Parse_X (CAR (CAR V1717))))
+               (IF (shen.wrapper (shen.doubleunderline? Parse_X))
+                   (shen.pair
+                    (CAR (shen.pair (CDR (CAR V1717)) (shen.hdtl V1717)))
+                    Parse_X)
+                   (fail)))
+             (fail))))
+    (IF (EQ Result (fail))
+        (fail)
+        Result)))
+
+(DEFUN shen.<singleunderline> (V1722)
+  (LET ((Result
+         (IF (CONSP (CAR V1722))
+             (LET ((Parse_X (CAR (CAR V1722))))
+               (IF (shen.wrapper (shen.singleunderline? Parse_X))
+                   (shen.pair
+                    (CAR (shen.pair (CDR (CAR V1722)) (shen.hdtl V1722)))
+                    Parse_X)
+                   (fail)))
+             (fail))))
+    (IF (EQ Result (fail))
+        (fail)
+        Result)))
+
+(DEFUN shen.singleunderline? (V1723)
+  (and (symbol? V1723) (shen.sh? (str V1723))))
+
+(DEFUN shen.sh? (V1724)
+  (COND ((EQUAL "_" V1724) 'true)
+        (T (and (shen.equal? (pos V1724 0) "_") (shen.sh? (tlstr V1724))))))
+
+(DEFUN shen.doubleunderline? (V1725)
+  (and (symbol? V1725) (shen.dh? (str V1725))))
+
+(DEFUN shen.dh? (V1726)
+  (COND ((EQUAL "=" V1726) 'true)
+        (T (and (shen.equal? (pos V1726 0) "=") (shen.dh? (tlstr V1726))))))
+
+(DEFUN shen.process-datatype (V1727 V1728)
+  (shen.remember-datatype
+   (shen.s-prolog (shen.rules->horn-clauses V1727 V1728))))
+
+(DEFUN shen.remember-datatype (V1733)
+  (COND
+   ((CONSP V1733)
+    (do (set 'shen.*datatypes* (adjoin (CAR V1733) shen.*datatypes*))
+        (do (set 'shen.*alldatatypes* (adjoin (CAR V1733) shen.*alldatatypes*))
+            (CAR V1733))))
+   (T (shen.sys-error 'shen.remember-datatype))))
+
+(DEFUN shen.rules->horn-clauses (V1736 V1737)
+  (COND ((NULL V1737) NIL)
+        ((AND (CONSP V1737)
+              (AND
+               (AND (ARRAYP (CAR V1737)) (NOT (STRINGP (CAR V1737)))
+                    (EQ (AREF (CAR V1737) 0) 'shen.tuple))
+               (EQ 'shen.single (fst (CAR V1737)))))
+         (CONS (shen.rule->horn-clause V1736 (snd (CAR V1737)))
+               (shen.rules->horn-clauses V1736 (CDR V1737))))
+        ((AND (CONSP V1737)
+              (AND
+               (AND (ARRAYP (CAR V1737)) (NOT (STRINGP (CAR V1737)))
+                    (EQ (AREF (CAR V1737) 0) 'shen.tuple))
+               (EQ 'shen.double (fst (CAR V1737)))))
+         (shen.rules->horn-clauses V1736
+          (APPEND (shen.double->singles (snd (CAR V1737))) (CDR V1737))))
+        (T (shen.sys-error 'shen.rules->horn-clauses))))
+
+(DEFUN shen.double->singles (V1738)
+  (CONS (shen.right-rule V1738) (CONS (shen.left-rule V1738) NIL)))
+
+(DEFUN shen.right-rule (V1739) (@p 'shen.single V1739))
+
+(DEFUN shen.left-rule (V1740)
+  (COND
+   ((AND (CONSP V1740)
+         (AND (CONSP (CDR V1740))
+              (AND (CONSP (CDR (CDR V1740)))
+                   (AND
+                    (AND (ARRAYP (CAR (CDR (CDR V1740))))
+                         (NOT (STRINGP (CAR (CDR (CDR V1740)))))
+                         (EQ (AREF (CAR (CDR (CDR V1740))) 0) 'shen.tuple))
+                    (AND (NULL (fst (CAR (CDR (CDR V1740)))))
+                         (NULL (CDR (CDR (CDR V1740)))))))))
+    (LET ((Q (gensym 'Qv)))
+      (LET ((NewConclusion (@p (CONS (snd (CAR (CDR (CDR V1740)))) NIL) Q)))
+        (LET ((NewPremises
+               (CONS (@p (map 'shen.right->left (CAR (CDR V1740))) Q) NIL)))
+          (@p 'shen.single
+              (CONS (CAR V1740)
+                    (CONS NewPremises (CONS NewConclusion NIL))))))))
+   (T (shen.sys-error 'shen.left-rule))))
+
+(DEFUN shen.right->left (V1745)
+  (COND
+   ((AND
+     (AND (ARRAYP V1745) (NOT (STRINGP V1745)) (EQ (AREF V1745 0) 'shen.tuple))
+     (NULL (fst V1745)))
+    (snd V1745))
+   (T
+    (simple-error "syntax error with ==========
+"))))
+
+(DEFUN shen.rule->horn-clause (V1746 V1747)
+  (COND
+   ((AND (CONSP V1747)
+         (AND (CONSP (CDR V1747))
+              (AND (CONSP (CDR (CDR V1747)))
+                   (AND
+                    (AND (ARRAYP (CAR (CDR (CDR V1747))))
+                         (NOT (STRINGP (CAR (CDR (CDR V1747)))))
+                         (EQ (AREF (CAR (CDR (CDR V1747))) 0) 'shen.tuple))
+                    (NULL (CDR (CDR (CDR V1747))))))))
+    (CONS (shen.rule->horn-clause-head V1746 (snd (CAR (CDR (CDR V1747)))))
+          (CONS '|:-|
+                (CONS
+                 (shen.rule->horn-clause-body (CAR V1747) (CAR (CDR V1747))
+                  (fst (CAR (CDR (CDR V1747)))))
+                 NIL))))
+   (T (shen.sys-error 'shen.rule->horn-clause))))
+
+(DEFUN shen.rule->horn-clause-head (V1748 V1749)
+  (CONS V1748 (CONS (shen.mode-ify V1749) (CONS 'Context_1957 NIL))))
+
+(DEFUN shen.mode-ify (V1750)
+  (COND
+   ((AND (CONSP V1750)
+         (AND (CONSP (CDR V1750))
+              (AND (EQ '|:| (CAR (CDR V1750)))
+                   (AND (CONSP (CDR (CDR V1750)))
+                        (NULL (CDR (CDR (CDR V1750))))))))
+    (CONS 'mode
+          (CONS
+           (CONS (CAR V1750)
+                 (CONS '|:|
+                       (CONS
+                        (CONS 'mode
+                              (CONS (CAR (CDR (CDR V1750))) (CONS '+ NIL)))
+                        NIL)))
+           (CONS '- NIL))))
+   (T V1750)))
+
+(DEFUN shen.rule->horn-clause-body (V1751 V1752 V1753)
+  (LET ((Variables (map 'shen.extract_vars V1753)))
+    (LET ((Predicates (map #'(LAMBDA (X) (gensym 'shen.cl)) V1753)))
+      (LET ((SearchLiterals
+             (shen.construct-search-literals Predicates Variables 'Context_1957
+              'Context1_1957)))
+        (LET ((SearchClauses
+               (shen.construct-search-clauses Predicates V1753 Variables)))
+          (LET ((SideLiterals (shen.construct-side-literals V1751)))
+            (LET ((PremissLiterals
+                   (map
+                    #'(LAMBDA (X)
+                        (shen.construct-premiss-literal X (empty? V1753)))
+                    V1752)))
+              (APPEND SearchLiterals
+                      (APPEND SideLiterals PremissLiterals)))))))))
+
+(DEFUN shen.construct-search-literals (V1758 V1759 V1760 V1761)
+  (COND ((AND (NULL V1758) (NULL V1759)) NIL)
+        (T (shen.csl-help V1758 V1759 V1760 V1761))))
+
+(DEFUN shen.csl-help (V1764 V1765 V1766 V1767)
+  (COND
+   ((AND (NULL V1764) (NULL V1765))
+    (CONS (CONS 'bind (CONS 'ContextOut_1957 (CONS V1766 NIL))) NIL))
+   ((AND (CONSP V1764) (CONSP V1765))
+    (CONS (CONS (CAR V1764) (CONS V1766 (CONS V1767 (CAR V1765))))
+          (shen.csl-help (CDR V1764) (CDR V1765) V1767 (gensym 'Context))))
+   (T (shen.sys-error 'shen.csl-help))))
+
+(DEFUN shen.construct-search-clauses (V1768 V1769 V1770)
+  (COND ((AND (NULL V1768) (AND (NULL V1769) (NULL V1770))) 'shen.skip)
+        ((AND (CONSP V1768) (AND (CONSP V1769) (CONSP V1770)))
+         (do (shen.construct-search-clause (CAR V1768) (CAR V1769) (CAR V1770))
+             (shen.construct-search-clauses (CDR V1768) (CDR V1769)
+              (CDR V1770))))
+        (T (shen.sys-error 'shen.construct-search-clauses))))
+
+(DEFUN shen.construct-search-clause (V1771 V1772 V1773)
+  (shen.s-prolog
+   (CONS (shen.construct-base-search-clause V1771 V1772 V1773)
+         (CONS (shen.construct-recursive-search-clause V1771 V1772 V1773)
+               NIL))))
+
+(DEFUN shen.construct-base-search-clause (V1774 V1775 V1776)
+  (CONS
+   (CONS V1774
+         (CONS (CONS (shen.mode-ify V1775) 'In_1957) (CONS 'In_1957 V1776)))
+   (CONS '|:-| (CONS NIL NIL))))
+
+(DEFUN shen.construct-recursive-search-clause (V1777 V1778 V1779)
+  (CONS
+   (CONS V1777
+         (CONS (CONS 'Assumption_1957 'Assumptions_1957)
+               (CONS (CONS 'Assumption_1957 'Out_1957) V1779)))
+   (CONS '|:-|
+         (CONS
+          (CONS (CONS V1777 (CONS 'Assumptions_1957 (CONS 'Out_1957 V1779)))
+                NIL)
+          NIL))))
+
+(DEFUN shen.construct-side-literals (V1784)
+  (COND ((NULL V1784) NIL)
+        ((AND (CONSP V1784)
+              (AND (CONSP (CAR V1784))
+                   (AND (EQ 'if (CAR (CAR V1784)))
+                        (AND (CONSP (CDR (CAR V1784)))
+                             (NULL (CDR (CDR (CAR V1784))))))))
+         (CONS (CONS 'when (CDR (CAR V1784)))
+               (shen.construct-side-literals (CDR V1784))))
+        ((AND (CONSP V1784)
+              (AND (CONSP (CAR V1784))
+                   (AND (EQ 'let (CAR (CAR V1784)))
+                        (AND (CONSP (CDR (CAR V1784)))
+                             (AND (CONSP (CDR (CDR (CAR V1784))))
+                                  (NULL (CDR (CDR (CDR (CAR V1784))))))))))
+         (CONS (CONS 'is (CDR (CAR V1784)))
+               (shen.construct-side-literals (CDR V1784))))
+        ((CONSP V1784) (shen.construct-side-literals (CDR V1784)))
+        (T (shen.sys-error 'shen.construct-side-literals))))
+
+(DEFUN shen.construct-premiss-literal (V1789 V1790)
+  (COND
+   ((AND (ARRAYP V1789) (NOT (STRINGP V1789)) (EQ (AREF V1789 0) 'shen.tuple))
+    (CONS 'shen.t*
+          (CONS (shen.recursive_cons_form (snd V1789))
+                (CONS (shen.construct-context V1790 (fst V1789)) NIL))))
+   ((EQ '! V1789) (CONS 'cut (CONS 'Throwcontrol NIL)))
+   (T (shen.sys-error 'shen.construct-premiss-literal))))
+
+(DEFUN shen.construct-context (V1791 V1792)
+  (COND ((AND (EQ 'true V1791) (NULL V1792)) 'Context_1957)
+        ((AND (EQ 'false V1791) (NULL V1792)) 'ContextOut_1957)
+        ((CONSP V1792)
+         (CONS 'cons
+               (CONS (shen.recursive_cons_form (CAR V1792))
+                     (CONS (shen.construct-context V1791 (CDR V1792)) NIL))))
+        (T (shen.sys-error 'shen.construct-context))))
+
+(DEFUN shen.recursive_cons_form (V1793)
+  (COND
+   ((CONSP V1793)
+    (CONS 'cons
+          (CONS (shen.recursive_cons_form (CAR V1793))
+                (CONS (shen.recursive_cons_form (CDR V1793)) NIL))))
+   (T V1793)))
+
+(DEFUN preclude (V1794) (shen.preclude-h (map 'shen.intern-type V1794)))
+
+(DEFUN shen.preclude-h (V1795)
+  (LET ((FilterDatatypes
+         (set 'shen.*datatypes* (difference shen.*datatypes* V1795))))
+    shen.*datatypes*))
+
+(DEFUN include (V1796) (shen.include-h (map 'shen.intern-type V1796)))
+
+(DEFUN shen.include-h (V1797)
+  (LET ((ValidTypes (intersection V1797 shen.*alldatatypes*)))
+    (LET ((NewDatatypes
+           (set 'shen.*datatypes* (union ValidTypes shen.*datatypes*))))
+      shen.*datatypes*)))
+
+(DEFUN preclude-all-but (V1798)
+  (shen.preclude-h
+   (difference shen.*alldatatypes* (map 'shen.intern-type V1798))))
+
+(DEFUN include-all-but (V1799)
+  (shen.include-h
+   (difference shen.*alldatatypes* (map 'shen.intern-type V1799))))
+
+(DEFUN shen.synonyms-help (V1804)
+  (COND ((NULL V1804) 'synonyms)
+        ((AND (CONSP V1804) (CONSP (CDR V1804)))
+         (do
+          (shen.pushnew (CONS (CAR V1804) (shen.curry-type (CAR (CDR V1804))))
+           'shen.*synonyms*)
+          (shen.synonyms-help (CDR (CDR V1804)))))
+        (T
+         (simple-error
+          (cn "odd number of synonyms
+"
+              "")))))
+
+(DEFUN shen.pushnew (V1805 V1806)
+  (IF (shen.wrapper (element? V1805 (value V1806)))
+      (value V1806)
+      (set V1806 (CONS V1805 (value V1806)))))
+

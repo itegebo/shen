@@ -1,0 +1,1089 @@
+
+"***********************************************************************************                           The License						                                      ** 										                                                                  ** The user is free to produce commercial applications with the software, to 	          ** distribute these applications in source or binary  form, and to charge monies         ** for them as he sees fit and in concordance with the laws of the land subject 	        ** to the following license.							                                                **										                                                                    * * 1. The license applies to all the software and all derived software and 	            **    must appear on such.							                                                  **										                                                                    ** 2. It is illegal to distribute the software without this license attached	            **    to it and use of the software implies agreement with the license as such.          **    It is illegal for anyone who is not the copyright holder to tamper with 	          **    or change the license.							                                                **										                                                                    ** 3. Neither the names of Lambda Associates or the copyright holder may be used         **    to endorse or promote products built using the software without specific 	        **    prior written permission from the copyright holder.		                            **										                                                                    ** 4. That possession of this license does not confer on the copyright holder 	          **    any special contractual obligation towards the user. That in no event 	            * *    shall the copyright holder be liable for any direct, indirect, incidental,        *   *    special, exemplary or consequential damages (including but not limited             **    to procurement of substitute goods or services, loss of use, data, 	              * *    interruption), however caused and on any theory of liability, whether in	          * *    contract, strict liability or tort (including negligence) arising in any         	**    way out of the use of the software, even if advised of the possibility of         	**    such damage.						                                                        		* *										                                                                    ** 5. It is permitted for the user to change the software, for the purpose of 	          **    improving performance, correcting an error, or porting to a new platform, 	        **    and distribute the derived version of Shen provided the resulting program 	        **    conforms in all respects to the Shen standard and is issued under that             * *    title. The user must make it clear with his distribution that he/she is 	          **    the author of the changes and what these changes are and why. 		                  **										                                                                    ** 6. Derived versions of this software in whatever form are subject to the same         **    restrictions. In particular it is not permitted to make derived copies of          **    this software which do not conform to the Shen standard or appear under a          **    different title.								                                                    **										                                                                    **    It is permitted to distribute versions of Shen which incorporate libraries,        **    graphics or other facilities which are not part of the Shen standard.	            **										                                                                    ** For an explication of this license see www.shenlanguage.org/license.htm which         ** explains this license in full.                                                        **				 						                                                                    ******************************************************************************************"
+
+(set 'shen.*installing-kl* 'false)
+
+(set 'shen.*history* NIL)
+
+(set 'shen.*tc* 'false)
+
+(set '*property-vector* (vector 20000))
+
+(set 'shen.*process-counter* 0)
+
+(set 'shen.*varcounter* (vector 1000))
+
+(set 'shen.*prologvectors* (vector 1000))
+
+(set 'shen.*reader-macros* NIL)
+
+(set '*home-directory* NIL)
+
+(set 'shen.*gensym* 0)
+
+(set 'shen.*tracking* NIL)
+
+(set '*home-directory* "")
+
+(set 'shen.*alphabet*
+ (CONS 'A
+  (CONS 'B
+   (CONS 'C
+    (CONS 'D
+     (CONS 'E
+      (CONS 'F
+       (CONS 'G
+        (CONS 'H
+         (CONS 'I
+          (CONS 'J
+           (CONS 'K
+            (CONS 'L
+             (CONS 'M
+              (CONS 'N
+               (CONS 'O
+                (CONS 'P
+                 (CONS 'Q
+                  (CONS 'R
+                   (CONS 'S
+                    (CONS 'T
+                     (CONS 'U
+                      (CONS 'V
+                       (CONS 'W
+                        (CONS 'X
+                         (CONS 'Y (CONS 'Z NIL)))))))))))))))))))))))))))
+
+(set 'shen.*special*
+ (CONS '@p
+  (CONS '@s
+   (CONS '@v
+    (CONS 'cons
+     (CONS 'lambda (CONS 'let (CONS 'where (CONS 'set (CONS 'open NIL))))))))))
+
+(set 'shen.*extraspecial*
+ (CONS 'define
+  (CONS 'shen.process-datatype
+   (CONS 'input+ (CONS 'defcc (CONS 'read+ (CONS 'defmacro NIL)))))))
+
+(set 'shen.*spy* 'false)
+
+(set 'shen.*datatypes* NIL)
+
+(set 'shen.*alldatatypes* NIL)
+
+(set 'shen.*shen-type-theory-enabled?* 'true)
+
+(set 'shen.*synonyms* NIL)
+
+(set 'shen.*system* NIL)
+
+(set 'shen.*signedfuncs* NIL)
+
+(set 'shen.*maxcomplexity* 128)
+
+(set 'shen.*occurs* 'true)
+
+(set 'shen.*maxinferences* 1000000)
+
+(set '*maximum-print-sequence-size* 20)
+
+(set 'shen.*catch* 0)
+
+(set 'shen.*call* 0)
+
+(set 'shen.*infs* 0)
+
+(set '*hush* 'false)
+
+(set 'shen.*optimise* 'false)
+
+(set '*version* "version 14.2")
+
+(DEFUN shen.initialise_arity_table (V820)
+ (COND ((NULL V820) NIL)
+  ((AND (CONSP V820) (CONSP (CDR V820)))
+   (LET ((DecArity (put (CAR V820) 'arity (CAR (CDR V820)) *property-vector*)))
+    (shen.initialise_arity_table (CDR (CDR V820)))))
+  (T (shen.sys-error 'shen.initialise_arity_table))))
+
+(DEFUN arity (V821)
+ (trap-error (get V821 'arity *property-vector*) #'(LAMBDA (E) -1)))
+
+(shen.initialise_arity_table
+ (CONS 'absvector
+  (CONS 1
+   (CONS 'adjoin
+    (CONS 2
+     (CONS 'and
+      (CONS 2
+       (CONS 'append
+        (CONS 2
+         (CONS 'arity
+          (CONS 1
+           (CONS 'assoc
+            (CONS 2
+             (CONS 'boolean?
+              (CONS 1
+               (CONS 'cd
+                (CONS 1
+                 (CONS 'compile
+                  (CONS 3
+                   (CONS 'concat
+                    (CONS 2
+                     (CONS 'cons
+                      (CONS 2
+                       (CONS 'cons?
+                        (CONS 1
+                         (CONS 'cn
+                          (CONS 2
+                           (CONS 'declare
+                            (CONS 2
+                             (CONS 'destroy
+                              (CONS 1
+                               (CONS 'difference
+                                (CONS 2
+                                 (CONS 'do
+                                  (CONS 2
+                                   (CONS 'element?
+                                    (CONS 2
+                                     (CONS 'empty?
+                                      (CONS 1
+                                       (CONS 'enable-type-theory
+                                        (CONS 1
+                                         (CONS 'interror
+                                          (CONS 2
+                                           (CONS 'eval
+                                            (CONS 1
+                                             (CONS 'eval-kl
+                                              (CONS 1
+                                               (CONS 'explode
+                                                (CONS 1
+                                                 (CONS 'external
+                                                  (CONS 1
+                                                   (CONS 'fail-if
+                                                    (CONS 2
+                                                     (CONS 'fail
+                                                      (CONS 0
+                                                       (CONS 'fix
+                                                        (CONS 2
+                                                         (CONS 'findall
+                                                          (CONS 5
+                                                           (CONS 'freeze
+                                                            (CONS 1
+                                                             (CONS 'fst
+                                                              (CONS 1
+                                                               (CONS 'gensym
+                                                                (CONS 1
+                                                                 (CONS 'get
+                                                                  (CONS 3
+                                                                   (CONS
+                                                                    'get-time
+                                                                    (CONS 1
+                                                                     (CONS
+                                                                      'address->
+                                                                      (CONS 3
+                                                                       (CONS
+                                                                        '<-address
+                                                                        (CONS 2
+                                                                         (CONS
+                                                                          '<-vector
+                                                                          (CONS
+                                                                           2
+                                                                           (CONS
+                                                                            '>
+                                                                            (CONS
+                                                                             2
+                                                                             (CONS
+                                                                              '>=
+                                                                              (CONS
+                                                                               2
+                                                                               (CONS
+                                                                                '=
+                                                                                (CONS
+                                                                                 2
+                                                                                 (CONS
+                                                                                  'hd
+                                                                                  (CONS
+                                                                                   1
+                                                                                   (CONS
+                                                                                    'hdv
+                                                                                    (CONS
+                                                                                     1
+                                                                                     (CONS
+                                                                                      'hdstr
+                                                                                      (CONS
+                                                                                       1
+                                                                                       (CONS
+                                                                                        'head
+                                                                                        (CONS
+                                                                                         1
+                                                                                         (CONS
+                                                                                          'if
+                                                                                          (CONS
+                                                                                           3
+                                                                                           (CONS
+                                                                                            'integer?
+                                                                                            (CONS
+                                                                                             1
+                                                                                             (CONS
+                                                                                              'intern
+                                                                                              (CONS
+                                                                                               1
+                                                                                               (CONS
+                                                                                                'identical
+                                                                                                (CONS
+                                                                                                 4
+                                                                                                 (CONS
+                                                                                                  'inferences
+                                                                                                  (CONS
+                                                                                                   0
+                                                                                                   (CONS
+                                                                                                    'input
+                                                                                                    (CONS
+                                                                                                     1
+                                                                                                     (CONS
+                                                                                                      'input+
+                                                                                                      (CONS
+                                                                                                       2
+                                                                                                       (CONS
+                                                                                                        'implementation
+                                                                                                        (CONS
+                                                                                                         0
+                                                                                                         (CONS
+                                                                                                          'intersection
+                                                                                                          (CONS
+                                                                                                           2
+                                                                                                           (CONS
+                                                                                                            'language
+                                                                                                            (CONS
+                                                                                                             0
+                                                                                                             (CONS
+                                                                                                              'length
+                                                                                                              (CONS
+                                                                                                               1
+                                                                                                               (CONS
+                                                                                                                'lineread
+                                                                                                                (CONS
+                                                                                                                 1
+                                                                                                                 (CONS
+                                                                                                                  'load
+                                                                                                                  (CONS
+                                                                                                                   1
+                                                                                                                   (CONS
+                                                                                                                    '<
+                                                                                                                    (CONS
+                                                                                                                     2
+                                                                                                                     (CONS
+                                                                                                                      '<=
+                                                                                                                      (CONS
+                                                                                                                       2
+                                                                                                                       (CONS
+                                                                                                                        'vector
+                                                                                                                        (CONS
+                                                                                                                         1
+                                                                                                                         (CONS
+                                                                                                                          'macroexpand
+                                                                                                                          (CONS
+                                                                                                                           1
+                                                                                                                           (CONS
+                                                                                                                            'map
+                                                                                                                            (CONS
+                                                                                                                             2
+                                                                                                                             (CONS
+                                                                                                                              'mapcan
+                                                                                                                              (CONS
+                                                                                                                               2
+                                                                                                                               (CONS
+                                                                                                                                'maxinferences
+                                                                                                                                (CONS
+                                                                                                                                 1
+                                                                                                                                 (CONS
+                                                                                                                                  'not
+                                                                                                                                  (CONS
+                                                                                                                                   1
+                                                                                                                                   (CONS
+                                                                                                                                    'nth
+                                                                                                                                    (CONS
+                                                                                                                                     2
+                                                                                                                                     (CONS
+                                                                                                                                      'n->string
+                                                                                                                                      (CONS
+                                                                                                                                       1
+                                                                                                                                       (CONS
+                                                                                                                                        'number?
+                                                                                                                                        (CONS
+                                                                                                                                         1
+                                                                                                                                         (CONS
+                                                                                                                                          'occurs-check
+                                                                                                                                          (CONS
+                                                                                                                                           1
+                                                                                                                                           (CONS
+                                                                                                                                            'occurrences
+                                                                                                                                            (CONS
+                                                                                                                                             2
+                                                                                                                                             (CONS
+                                                                                                                                              'occurs-check
+                                                                                                                                              (CONS
+                                                                                                                                               1
+                                                                                                                                               (CONS
+                                                                                                                                                'optimise
+                                                                                                                                                (CONS
+                                                                                                                                                 1
+                                                                                                                                                 (CONS
+                                                                                                                                                  'or
+                                                                                                                                                  (CONS
+                                                                                                                                                   2
+                                                                                                                                                   (CONS
+                                                                                                                                                    'os
+                                                                                                                                                    (CONS
+                                                                                                                                                     0
+                                                                                                                                                     (CONS
+                                                                                                                                                      'package
+                                                                                                                                                      (CONS
+                                                                                                                                                       3
+                                                                                                                                                       (CONS
+                                                                                                                                                        'port
+                                                                                                                                                        (CONS
+                                                                                                                                                         0
+                                                                                                                                                         (CONS
+                                                                                                                                                          'porters
+                                                                                                                                                          (CONS
+                                                                                                                                                           0
+                                                                                                                                                           (CONS
+                                                                                                                                                            'pos
+                                                                                                                                                            (CONS
+                                                                                                                                                             2
+                                                                                                                                                             (CONS
+                                                                                                                                                              'print
+                                                                                                                                                              (CONS
+                                                                                                                                                               1
+                                                                                                                                                               (CONS
+                                                                                                                                                                'profile
+                                                                                                                                                                (CONS
+                                                                                                                                                                 1
+                                                                                                                                                                 (CONS
+                                                                                                                                                                  'profile-results
+                                                                                                                                                                  (CONS
+                                                                                                                                                                   1
+                                                                                                                                                                   (CONS
+                                                                                                                                                                    'pr
+                                                                                                                                                                    (CONS
+                                                                                                                                                                     2
+                                                                                                                                                                     (CONS
+                                                                                                                                                                      'ps
+                                                                                                                                                                      (CONS
+                                                                                                                                                                       1
+                                                                                                                                                                       (CONS
+                                                                                                                                                                        'preclude
+                                                                                                                                                                        (CONS
+                                                                                                                                                                         1
+                                                                                                                                                                         (CONS
+                                                                                                                                                                          'preclude-all-but
+                                                                                                                                                                          (CONS
+                                                                                                                                                                           1
+                                                                                                                                                                           (CONS
+                                                                                                                                                                            'protect
+                                                                                                                                                                            (CONS
+                                                                                                                                                                             1
+                                                                                                                                                                             (CONS
+                                                                                                                                                                              'address->
+                                                                                                                                                                              (CONS
+                                                                                                                                                                               3
+                                                                                                                                                                               (CONS
+                                                                                                                                                                                'put
+                                                                                                                                                                                (CONS
+                                                                                                                                                                                 4
+                                                                                                                                                                                 (CONS
+                                                                                                                                                                                  'shen.reassemble
+                                                                                                                                                                                  (CONS
+                                                                                                                                                                                   2
+                                                                                                                                                                                   (CONS
+                                                                                                                                                                                    'read-file-as-string
+                                                                                                                                                                                    (CONS
+                                                                                                                                                                                     1
+                                                                                                                                                                                     (CONS
+                                                                                                                                                                                      'read-file
+                                                                                                                                                                                      (CONS
+                                                                                                                                                                                       1
+                                                                                                                                                                                       (CONS
+                                                                                                                                                                                        'read
+                                                                                                                                                                                        (CONS
+                                                                                                                                                                                         1
+                                                                                                                                                                                         (CONS
+                                                                                                                                                                                          'read-byte
+                                                                                                                                                                                          (CONS
+                                                                                                                                                                                           1
+                                                                                                                                                                                           (CONS
+                                                                                                                                                                                            'read-from-string
+                                                                                                                                                                                            (CONS
+                                                                                                                                                                                             1
+                                                                                                                                                                                             (CONS
+                                                                                                                                                                                              'release
+                                                                                                                                                                                              (CONS
+                                                                                                                                                                                               0
+                                                                                                                                                                                               (CONS
+                                                                                                                                                                                                'remove
+                                                                                                                                                                                                (CONS
+                                                                                                                                                                                                 2
+                                                                                                                                                                                                 (CONS
+                                                                                                                                                                                                  'reverse
+                                                                                                                                                                                                  (CONS
+                                                                                                                                                                                                   1
+                                                                                                                                                                                                   (CONS
+                                                                                                                                                                                                    'set
+                                                                                                                                                                                                    (CONS
+                                                                                                                                                                                                     2
+                                                                                                                                                                                                     (CONS
+                                                                                                                                                                                                      'simple-error
+                                                                                                                                                                                                      (CONS
+                                                                                                                                                                                                       1
+                                                                                                                                                                                                       (CONS
+                                                                                                                                                                                                        'snd
+                                                                                                                                                                                                        (CONS
+                                                                                                                                                                                                         1
+                                                                                                                                                                                                         (CONS
+                                                                                                                                                                                                          'specialise
+                                                                                                                                                                                                          (CONS
+                                                                                                                                                                                                           1
+                                                                                                                                                                                                           (CONS
+                                                                                                                                                                                                            'spy
+                                                                                                                                                                                                            (CONS
+                                                                                                                                                                                                             1
+                                                                                                                                                                                                             (CONS
+                                                                                                                                                                                                              'step
+                                                                                                                                                                                                              (CONS
+                                                                                                                                                                                                               1
+                                                                                                                                                                                                               (CONS
+                                                                                                                                                                                                                'stinput
+                                                                                                                                                                                                                (CONS
+                                                                                                                                                                                                                 0
+                                                                                                                                                                                                                 (CONS
+                                                                                                                                                                                                                  'stoutput
+                                                                                                                                                                                                                  (CONS
+                                                                                                                                                                                                                   0
+                                                                                                                                                                                                                   (CONS
+                                                                                                                                                                                                                    'string->n
+                                                                                                                                                                                                                    (CONS
+                                                                                                                                                                                                                     1
+                                                                                                                                                                                                                     (CONS
+                                                                                                                                                                                                                      'string->symbol
+                                                                                                                                                                                                                      (CONS
+                                                                                                                                                                                                                       1
+                                                                                                                                                                                                                       (CONS
+                                                                                                                                                                                                                        'string?
+                                                                                                                                                                                                                        (CONS
+                                                                                                                                                                                                                         1
+                                                                                                                                                                                                                         (CONS
+                                                                                                                                                                                                                          'shen.strong-warning
+                                                                                                                                                                                                                          (CONS
+                                                                                                                                                                                                                           1
+                                                                                                                                                                                                                           (CONS
+                                                                                                                                                                                                                            'subst
+                                                                                                                                                                                                                            (CONS
+                                                                                                                                                                                                                             3
+                                                                                                                                                                                                                             (CONS
+                                                                                                                                                                                                                              'sum
+                                                                                                                                                                                                                              (CONS
+                                                                                                                                                                                                                               1
+                                                                                                                                                                                                                               (CONS
+                                                                                                                                                                                                                                'symbol?
+                                                                                                                                                                                                                                (CONS
+                                                                                                                                                                                                                                 1
+                                                                                                                                                                                                                                 (CONS
+                                                                                                                                                                                                                                  'tail
+                                                                                                                                                                                                                                  (CONS
+                                                                                                                                                                                                                                   1
+                                                                                                                                                                                                                                   (CONS
+                                                                                                                                                                                                                                    'tl
+                                                                                                                                                                                                                                    (CONS
+                                                                                                                                                                                                                                     1
+                                                                                                                                                                                                                                     (CONS
+                                                                                                                                                                                                                                      'tc
+                                                                                                                                                                                                                                      (CONS
+                                                                                                                                                                                                                                       1
+                                                                                                                                                                                                                                       (CONS
+                                                                                                                                                                                                                                        'tc?
+                                                                                                                                                                                                                                        (CONS
+                                                                                                                                                                                                                                         0
+                                                                                                                                                                                                                                         (CONS
+                                                                                                                                                                                                                                          'thaw
+                                                                                                                                                                                                                                          (CONS
+                                                                                                                                                                                                                                           1
+                                                                                                                                                                                                                                           (CONS
+                                                                                                                                                                                                                                            'tlstr
+                                                                                                                                                                                                                                            (CONS
+                                                                                                                                                                                                                                             1
+                                                                                                                                                                                                                                             (CONS
+                                                                                                                                                                                                                                              'track
+                                                                                                                                                                                                                                              (CONS
+                                                                                                                                                                                                                                               1
+                                                                                                                                                                                                                                               (CONS
+                                                                                                                                                                                                                                                'trap-error
+                                                                                                                                                                                                                                                (CONS
+                                                                                                                                                                                                                                                 2
+                                                                                                                                                                                                                                                 (CONS
+                                                                                                                                                                                                                                                  'tuple?
+                                                                                                                                                                                                                                                  (CONS
+                                                                                                                                                                                                                                                   1
+                                                                                                                                                                                                                                                   (CONS
+                                                                                                                                                                                                                                                    'type
+                                                                                                                                                                                                                                                    (CONS
+                                                                                                                                                                                                                                                     1
+                                                                                                                                                                                                                                                     (CONS
+                                                                                                                                                                                                                                                      'return
+                                                                                                                                                                                                                                                      (CONS
+                                                                                                                                                                                                                                                       3
+                                                                                                                                                                                                                                                       (CONS
+                                                                                                                                                                                                                                                        'undefmacro
+                                                                                                                                                                                                                                                        (CONS
+                                                                                                                                                                                                                                                         1
+                                                                                                                                                                                                                                                         (CONS
+                                                                                                                                                                                                                                                          'unprofile
+                                                                                                                                                                                                                                                          (CONS
+                                                                                                                                                                                                                                                           1
+                                                                                                                                                                                                                                                           (CONS
+                                                                                                                                                                                                                                                            'unify
+                                                                                                                                                                                                                                                            (CONS
+                                                                                                                                                                                                                                                             4
+                                                                                                                                                                                                                                                             (CONS
+                                                                                                                                                                                                                                                              'unify!
+                                                                                                                                                                                                                                                              (CONS
+                                                                                                                                                                                                                                                               4
+                                                                                                                                                                                                                                                               (CONS
+                                                                                                                                                                                                                                                                'union
+                                                                                                                                                                                                                                                                (CONS
+                                                                                                                                                                                                                                                                 2
+                                                                                                                                                                                                                                                                 (CONS
+                                                                                                                                                                                                                                                                  'untrack
+                                                                                                                                                                                                                                                                  (CONS
+                                                                                                                                                                                                                                                                   1
+                                                                                                                                                                                                                                                                   (CONS
+                                                                                                                                                                                                                                                                    'unspecialise
+                                                                                                                                                                                                                                                                    (CONS
+                                                                                                                                                                                                                                                                     1
+                                                                                                                                                                                                                                                                     (CONS
+                                                                                                                                                                                                                                                                      'undefmacro
+                                                                                                                                                                                                                                                                      (CONS
+                                                                                                                                                                                                                                                                       1
+                                                                                                                                                                                                                                                                       (CONS
+                                                                                                                                                                                                                                                                        'vector
+                                                                                                                                                                                                                                                                        (CONS
+                                                                                                                                                                                                                                                                         1
+                                                                                                                                                                                                                                                                         (CONS
+                                                                                                                                                                                                                                                                          'vector->
+                                                                                                                                                                                                                                                                          (CONS
+                                                                                                                                                                                                                                                                           3
+                                                                                                                                                                                                                                                                           (CONS
+                                                                                                                                                                                                                                                                            'value
+                                                                                                                                                                                                                                                                            (CONS
+                                                                                                                                                                                                                                                                             1
+                                                                                                                                                                                                                                                                             (CONS
+                                                                                                                                                                                                                                                                              'variable?
+                                                                                                                                                                                                                                                                              (CONS
+                                                                                                                                                                                                                                                                               1
+                                                                                                                                                                                                                                                                               (CONS
+                                                                                                                                                                                                                                                                                'version
+                                                                                                                                                                                                                                                                                (CONS
+                                                                                                                                                                                                                                                                                 0
+                                                                                                                                                                                                                                                                                 (CONS
+                                                                                                                                                                                                                                                                                  'warn
+                                                                                                                                                                                                                                                                                  (CONS
+                                                                                                                                                                                                                                                                                   1
+                                                                                                                                                                                                                                                                                   (CONS
+                                                                                                                                                                                                                                                                                    'write-byte
+                                                                                                                                                                                                                                                                                    (CONS
+                                                                                                                                                                                                                                                                                     2
+                                                                                                                                                                                                                                                                                     (CONS
+                                                                                                                                                                                                                                                                                      'write-to-file
+                                                                                                                                                                                                                                                                                      (CONS
+                                                                                                                                                                                                                                                                                       2
+                                                                                                                                                                                                                                                                                       (CONS
+                                                                                                                                                                                                                                                                                        'y-or-n?
+                                                                                                                                                                                                                                                                                        (CONS
+                                                                                                                                                                                                                                                                                         1
+                                                                                                                                                                                                                                                                                         (CONS
+                                                                                                                                                                                                                                                                                          '+
+                                                                                                                                                                                                                                                                                          (CONS
+                                                                                                                                                                                                                                                                                           2
+                                                                                                                                                                                                                                                                                           (CONS
+                                                                                                                                                                                                                                                                                            '*
+                                                                                                                                                                                                                                                                                            (CONS
+                                                                                                                                                                                                                                                                                             2
+                                                                                                                                                                                                                                                                                             (CONS
+                                                                                                                                                                                                                                                                                              '/
+                                                                                                                                                                                                                                                                                              (CONS
+                                                                                                                                                                                                                                                                                               2
+                                                                                                                                                                                                                                                                                               (CONS
+                                                                                                                                                                                                                                                                                                '-
+                                                                                                                                                                                                                                                                                                (CONS
+                                                                                                                                                                                                                                                                                                 2
+                                                                                                                                                                                                                                                                                                 (CONS
+                                                                                                                                                                                                                                                                                                  '==
+                                                                                                                                                                                                                                                                                                  (CONS
+                                                                                                                                                                                                                                                                                                   2
+                                                                                                                                                                                                                                                                                                   (CONS
+                                                                                                                                                                                                                                                                                                    '<e>
+                                                                                                                                                                                                                                                                                                    (CONS
+                                                                                                                                                                                                                                                                                                     1
+                                                                                                                                                                                                                                                                                                     (CONS
+                                                                                                                                                                                                                                                                                                      '@p
+                                                                                                                                                                                                                                                                                                      (CONS
+                                                                                                                                                                                                                                                                                                       2
+                                                                                                                                                                                                                                                                                                       (CONS
+                                                                                                                                                                                                                                                                                                        '@v
+                                                                                                                                                                                                                                                                                                        (CONS
+                                                                                                                                                                                                                                                                                                         2
+                                                                                                                                                                                                                                                                                                         (CONS
+                                                                                                                                                                                                                                                                                                          '@s
+                                                                                                                                                                                                                                                                                                          (CONS
+                                                                                                                                                                                                                                                                                                           2
+                                                                                                                                                                                                                                                                                                           (CONS
+                                                                                                                                                                                                                                                                                                            'preclude
+                                                                                                                                                                                                                                                                                                            (CONS
+                                                                                                                                                                                                                                                                                                             1
+                                                                                                                                                                                                                                                                                                             (CONS
+                                                                                                                                                                                                                                                                                                              'include
+                                                                                                                                                                                                                                                                                                              (CONS
+                                                                                                                                                                                                                                                                                                               1
+                                                                                                                                                                                                                                                                                                               (CONS
+                                                                                                                                                                                                                                                                                                                'preclude-all-but
+                                                                                                                                                                                                                                                                                                                (CONS
+                                                                                                                                                                                                                                                                                                                 1
+                                                                                                                                                                                                                                                                                                                 (CONS
+                                                                                                                                                                                                                                                                                                                  'include-all-but
+                                                                                                                                                                                                                                                                                                                  (CONS
+                                                                                                                                                                                                                                                                                                                   1
+                                                                                                                                                                                                                                                                                                                   (CONS
+                                                                                                                                                                                                                                                                                                                    'where
+                                                                                                                                                                                                                                                                                                                    (CONS
+                                                                                                                                                                                                                                                                                                                     2
+                                                                                                                                                                                                                                                                                                                     NIL)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+
+(DEFUN systemf (V822)
+ (LET ((Shen (intern "shen")))
+  (LET ((External (get Shen 'shen.external-symbols *property-vector*)))
+   (put Shen 'shen.external-symbols (adjoin V822 External)
+    *property-vector*))))
+
+(DEFUN adjoin (V823 V824)
+ (IF (shen.wrapper (element? V823 V824)) V824 (CONS V823 V824)))
+
+(put (intern "shen") 'shen.external-symbols
+ (CONS '!
+  (CONS '}
+   (CONS '{
+    (CONS '-->
+     (CONS '<--
+      (CONS '&&
+       (CONS '|:|
+        (CONS '|;|
+         (CONS '|:-|
+          (CONS '|:=|
+           (CONS '_
+            (CONS '*language*
+             (CONS '*implementation*
+              (CONS '*stinput*
+               (CONS '*home-directory*
+                (CONS '*version*
+                 (CONS '*maximum-print-sequence-size*
+                  (CONS '*macros*
+                   (CONS '*os*
+                    (CONS '*release*
+                     (CONS '*property-vector*
+                      (CONS '@v
+                       (CONS '@p
+                        (CONS '@s
+                         (CONS '*port*
+                          (CONS '*porters*
+                           (CONS '*hush*
+                            (CONS '<-
+                             (CONS '->
+                              (CONS '<e>
+                               (CONS '==
+                                (CONS '=
+                                 (CONS '>=
+                                  (CONS '>
+                                   (CONS '/.
+                                    (CONS '=!
+                                     (CONS '$
+                                      (CONS '-
+                                       (CONS '/
+                                        (CONS '*
+                                         (CONS '+
+                                          (CONS '<=
+                                           (CONS '<
+                                            (CONS '>>
+                                             (CONS (vector 0)
+                                              (CONS '==>
+                                               (CONS 'y-or-n?
+                                                (CONS 'write-to-file
+                                                 (CONS 'write-byte
+                                                  (CONS 'where
+                                                   (CONS 'when
+                                                    (CONS 'warn
+                                                     (CONS 'version
+                                                      (CONS 'verified
+                                                       (CONS 'variable?
+                                                        (CONS 'value
+                                                         (CONS 'vector->
+                                                          (CONS '<-vector
+                                                           (CONS 'vector
+                                                            (CONS 'vector?
+                                                             (CONS
+                                                              'unspecialise
+                                                              (CONS 'untrack
+                                                               (CONS 'unit
+                                                                (CONS
+                                                                 'shen.unix
+                                                                 (CONS 'union
+                                                                  (CONS 'unify
+                                                                   (CONS
+                                                                    'unify!
+                                                                    (CONS
+                                                                     'unprofile
+                                                                     (CONS
+                                                                      'undefmacro
+                                                                      (CONS
+                                                                       'return
+                                                                       (CONS
+                                                                        'type
+                                                                        (CONS
+                                                                         'tuple?
+                                                                         (CONS
+                                                                          'true
+                                                                          (CONS
+                                                                           'trap-error
+                                                                           (CONS
+                                                                            'track
+                                                                            (CONS
+                                                                             'time
+                                                                             (CONS
+                                                                              'thaw
+                                                                              (CONS
+                                                                               'tc?
+                                                                               (CONS
+                                                                                'tc
+                                                                                (CONS
+                                                                                 'tl
+                                                                                 (CONS
+                                                                                  'tlstr
+                                                                                  (CONS
+                                                                                   'tlv
+                                                                                   (CONS
+                                                                                    'tail
+                                                                                    (CONS
+                                                                                     'systemf
+                                                                                     (CONS
+                                                                                      'synonyms
+                                                                                      (CONS
+                                                                                       'symbol
+                                                                                       (CONS
+                                                                                        'symbol?
+                                                                                        (CONS
+                                                                                         'string->symbol
+                                                                                         (CONS
+                                                                                          'subst
+                                                                                          (CONS
+                                                                                           'string?
+                                                                                           (CONS
+                                                                                            'string->n
+                                                                                            (CONS
+                                                                                             'stream
+                                                                                             (CONS
+                                                                                              'string
+                                                                                              (CONS
+                                                                                               'stinput
+                                                                                               (CONS
+                                                                                                'stoutput
+                                                                                                (CONS
+                                                                                                 'step
+                                                                                                 (CONS
+                                                                                                  'spy
+                                                                                                  (CONS
+                                                                                                   'specialise
+                                                                                                   (CONS
+                                                                                                    'snd
+                                                                                                    (CONS
+                                                                                                     'simple-error
+                                                                                                     (CONS
+                                                                                                      'set
+                                                                                                      (CONS
+                                                                                                       'save
+                                                                                                       (CONS
+                                                                                                        'str
+                                                                                                        (CONS
+                                                                                                         'run
+                                                                                                         (CONS
+                                                                                                          'reverse
+                                                                                                          (CONS
+                                                                                                           'remove
+                                                                                                           (CONS
+                                                                                                            'release
+                                                                                                            (CONS
+                                                                                                             'read
+                                                                                                             (CONS
+                                                                                                              'read+
+                                                                                                              (CONS
+                                                                                                               'read-file
+                                                                                                               (CONS
+                                                                                                                'read-file-as-bytelist
+                                                                                                                (CONS
+                                                                                                                 'read-file-as-string
+                                                                                                                 (CONS
+                                                                                                                  'read-byte
+                                                                                                                  (CONS
+                                                                                                                   'read-from-string
+                                                                                                                   (CONS
+                                                                                                                    'quit
+                                                                                                                    (CONS
+                                                                                                                     'put
+                                                                                                                     (CONS
+                                                                                                                      'preclude
+                                                                                                                      (CONS
+                                                                                                                       'preclude-all-but
+                                                                                                                       (CONS
+                                                                                                                        'ps
+                                                                                                                        (CONS
+                                                                                                                         'prolog?
+                                                                                                                         (CONS
+                                                                                                                          'protect
+                                                                                                                          (CONS
+                                                                                                                           'profile-results
+                                                                                                                           (CONS
+                                                                                                                            'profile
+                                                                                                                            (CONS
+                                                                                                                             'print
+                                                                                                                             (CONS
+                                                                                                                              'pr
+                                                                                                                              (CONS
+                                                                                                                               'pos
+                                                                                                                               (CONS
+                                                                                                                                'porters
+                                                                                                                                (CONS
+                                                                                                                                 'port
+                                                                                                                                 (CONS
+                                                                                                                                  'package
+                                                                                                                                  (CONS
+                                                                                                                                   'output
+                                                                                                                                   (CONS
+                                                                                                                                    'out
+                                                                                                                                    (CONS
+                                                                                                                                     'os
+                                                                                                                                     (CONS
+                                                                                                                                      'or
+                                                                                                                                      (CONS
+                                                                                                                                       'open
+                                                                                                                                       (CONS
+                                                                                                                                        'occurrences
+                                                                                                                                        (CONS
+                                                                                                                                         'occurs-check
+                                                                                                                                         (CONS
+                                                                                                                                          'n->string
+                                                                                                                                          (CONS
+                                                                                                                                           'number?
+                                                                                                                                           (CONS
+                                                                                                                                            'number
+                                                                                                                                            (CONS
+                                                                                                                                             'null
+                                                                                                                                             (CONS
+                                                                                                                                              'nth
+                                                                                                                                              (CONS
+                                                                                                                                               'not
+                                                                                                                                               (CONS
+                                                                                                                                                'nl
+                                                                                                                                                (CONS
+                                                                                                                                                 'mode
+                                                                                                                                                 (CONS
+                                                                                                                                                  'macro
+                                                                                                                                                  (CONS
+                                                                                                                                                   'macroexpand
+                                                                                                                                                   (CONS
+                                                                                                                                                    'maxinferences
+                                                                                                                                                    (CONS
+                                                                                                                                                     'mapcan
+                                                                                                                                                     (CONS
+                                                                                                                                                      'map
+                                                                                                                                                      (CONS
+                                                                                                                                                       'make-string
+                                                                                                                                                       (CONS
+                                                                                                                                                        'load
+                                                                                                                                                        (CONS
+                                                                                                                                                         'loaded
+                                                                                                                                                         (CONS
+                                                                                                                                                          'list
+                                                                                                                                                          (CONS
+                                                                                                                                                           'lineread
+                                                                                                                                                           (CONS
+                                                                                                                                                            'limit
+                                                                                                                                                            (CONS
+                                                                                                                                                             'length
+                                                                                                                                                             (CONS
+                                                                                                                                                              'let
+                                                                                                                                                              (CONS
+                                                                                                                                                               'lazy
+                                                                                                                                                               (CONS
+                                                                                                                                                                'lambda
+                                                                                                                                                                (CONS
+                                                                                                                                                                 'language
+                                                                                                                                                                 (CONS
+                                                                                                                                                                  'is
+                                                                                                                                                                  (CONS
+                                                                                                                                                                   'intersection
+                                                                                                                                                                   (CONS
+                                                                                                                                                                    'inferences
+                                                                                                                                                                    (CONS
+                                                                                                                                                                     'intern
+                                                                                                                                                                     (CONS
+                                                                                                                                                                      'integer?
+                                                                                                                                                                      (CONS
+                                                                                                                                                                       'input
+                                                                                                                                                                       (CONS
+                                                                                                                                                                        'input+
+                                                                                                                                                                        (CONS
+                                                                                                                                                                         'include
+                                                                                                                                                                         (CONS
+                                                                                                                                                                          'include-all-but
+                                                                                                                                                                          (CONS
+                                                                                                                                                                           'in
+                                                                                                                                                                           (CONS
+                                                                                                                                                                            'implementation
+                                                                                                                                                                            (CONS
+                                                                                                                                                                             'if
+                                                                                                                                                                             (CONS
+                                                                                                                                                                              'identical
+                                                                                                                                                                              (CONS
+                                                                                                                                                                               'head
+                                                                                                                                                                               (CONS
+                                                                                                                                                                                'hd
+                                                                                                                                                                                (CONS
+                                                                                                                                                                                 'hdv
+                                                                                                                                                                                 (CONS
+                                                                                                                                                                                  'hdstr
+                                                                                                                                                                                  (CONS
+                                                                                                                                                                                   'hash
+                                                                                                                                                                                   (CONS
+                                                                                                                                                                                    'get
+                                                                                                                                                                                    (CONS
+                                                                                                                                                                                     'get-time
+                                                                                                                                                                                     (CONS
+                                                                                                                                                                                      'gensym
+                                                                                                                                                                                      (CONS
+                                                                                                                                                                                       'function
+                                                                                                                                                                                       (CONS
+                                                                                                                                                                                        'fst
+                                                                                                                                                                                        (CONS
+                                                                                                                                                                                         'freeze
+                                                                                                                                                                                         (CONS
+                                                                                                                                                                                          'fix
+                                                                                                                                                                                          (CONS
+                                                                                                                                                                                           'file
+                                                                                                                                                                                           (CONS
+                                                                                                                                                                                            'fail
+                                                                                                                                                                                            (CONS
+                                                                                                                                                                                             'fail-if
+                                                                                                                                                                                             (CONS
+                                                                                                                                                                                              'fwhen
+                                                                                                                                                                                              (CONS
+                                                                                                                                                                                               'findall
+                                                                                                                                                                                               (CONS
+                                                                                                                                                                                                'false
+                                                                                                                                                                                                (CONS
+                                                                                                                                                                                                 'enable-type-theory
+                                                                                                                                                                                                 (CONS
+                                                                                                                                                                                                  'explode
+                                                                                                                                                                                                  (CONS
+                                                                                                                                                                                                   'external
+                                                                                                                                                                                                   (CONS
+                                                                                                                                                                                                    'exception
+                                                                                                                                                                                                    (CONS
+                                                                                                                                                                                                     'eval-kl
+                                                                                                                                                                                                     (CONS
+                                                                                                                                                                                                      'eval
+                                                                                                                                                                                                      (CONS
+                                                                                                                                                                                                       'error-to-string
+                                                                                                                                                                                                       (CONS
+                                                                                                                                                                                                        'error
+                                                                                                                                                                                                        (CONS
+                                                                                                                                                                                                         'empty?
+                                                                                                                                                                                                         (CONS
+                                                                                                                                                                                                          'element?
+                                                                                                                                                                                                          (CONS
+                                                                                                                                                                                                           'do
+                                                                                                                                                                                                           (CONS
+                                                                                                                                                                                                            'difference
+                                                                                                                                                                                                            (CONS
+                                                                                                                                                                                                             'destroy
+                                                                                                                                                                                                             (CONS
+                                                                                                                                                                                                              'defun
+                                                                                                                                                                                                              (CONS
+                                                                                                                                                                                                               'define
+                                                                                                                                                                                                               (CONS
+                                                                                                                                                                                                                'defmacro
+                                                                                                                                                                                                                (CONS
+                                                                                                                                                                                                                 'defcc
+                                                                                                                                                                                                                 (CONS
+                                                                                                                                                                                                                  'defprolog
+                                                                                                                                                                                                                  (CONS
+                                                                                                                                                                                                                   'declare
+                                                                                                                                                                                                                   (CONS
+                                                                                                                                                                                                                    'datatype
+                                                                                                                                                                                                                    (CONS
+                                                                                                                                                                                                                     'cut
+                                                                                                                                                                                                                     (CONS
+                                                                                                                                                                                                                      'cn
+                                                                                                                                                                                                                      (CONS
+                                                                                                                                                                                                                       'cons?
+                                                                                                                                                                                                                       (CONS
+                                                                                                                                                                                                                        'cons
+                                                                                                                                                                                                                        (CONS
+                                                                                                                                                                                                                         'cond
+                                                                                                                                                                                                                         (CONS
+                                                                                                                                                                                                                          'concat
+                                                                                                                                                                                                                          (CONS
+                                                                                                                                                                                                                           'compile
+                                                                                                                                                                                                                           (CONS
+                                                                                                                                                                                                                            'cd
+                                                                                                                                                                                                                            (CONS
+                                                                                                                                                                                                                             'cases
+                                                                                                                                                                                                                             (CONS
+                                                                                                                                                                                                                              'call
+                                                                                                                                                                                                                              (CONS
+                                                                                                                                                                                                                               'close
+                                                                                                                                                                                                                               (CONS
+                                                                                                                                                                                                                                'bind
+                                                                                                                                                                                                                                (CONS
+                                                                                                                                                                                                                                 'bound?
+                                                                                                                                                                                                                                 (CONS
+                                                                                                                                                                                                                                  'boolean?
+                                                                                                                                                                                                                                  (CONS
+                                                                                                                                                                                                                                   'boolean
+                                                                                                                                                                                                                                   (CONS
+                                                                                                                                                                                                                                    'bar!
+                                                                                                                                                                                                                                    (CONS
+                                                                                                                                                                                                                                     'assoc
+                                                                                                                                                                                                                                     (CONS
+                                                                                                                                                                                                                                      'arity
+                                                                                                                                                                                                                                      (CONS
+                                                                                                                                                                                                                                       'append
+                                                                                                                                                                                                                                       (CONS
+                                                                                                                                                                                                                                        'and
+                                                                                                                                                                                                                                        (CONS
+                                                                                                                                                                                                                                         'adjoin
+                                                                                                                                                                                                                                         (CONS
+                                                                                                                                                                                                                                          '<-address
+                                                                                                                                                                                                                                          (CONS
+                                                                                                                                                                                                                                           'address->
+                                                                                                                                                                                                                                           (CONS
+                                                                                                                                                                                                                                            'absvector?
+                                                                                                                                                                                                                                            (CONS
+                                                                                                                                                                                                                                             'absvector
+                                                                                                                                                                                                                                             (CONS
+                                                                                                                                                                                                                                              'abort
+                                                                                                                                                                                                                                              NIL)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+ *property-vector*)
+
+(DEFUN specialise (V825)
+ (do (set 'shen.*special* (CONS V825 shen.*special*)) V825))
+
+(DEFUN unspecialise (V826)
+ (do (set 'shen.*special* (remove V826 shen.*special*)) V826))
+

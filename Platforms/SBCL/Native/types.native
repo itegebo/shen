@@ -1,0 +1,591 @@
+
+"**********************************************************************************
+*                           The License						                                      *
+* 										                                                                  *
+* The user is free to produce commercial applications with the software, to 	          *
+* distribute these applications in source or binary  form, and to charge monies         *
+* for them as he sees fit and in concordance with the laws of the land subject 	        *
+* to the following license.							                                                *
+*										                                                                    * 
+* 1. The license applies to all the software and all derived software and 	            *
+*    must appear on such.							                                                  *
+*										                                                                    *
+* 2. It is illegal to distribute the software without this license attached	            *
+*    to it and use of the software implies agreement with the license as such.          *
+*    It is illegal for anyone who is not the copyright holder to tamper with 	          *
+*    or change the license.							                                                *
+*										                                                                    *
+* 3. Neither the names of Lambda Associates or the copyright holder may be used         *
+*    to endorse or promote products built using the software without specific 	        *
+*    prior written permission from the copyright holder.		                            *
+*										                                                                    *
+* 4. That possession of this license does not confer on the copyright holder 	          *
+*    any special contractual obligation towards the user. That in no event 	            * 
+*    shall the copyright holder be liable for any direct, indirect, incidental,        *   
+*    special, exemplary or consequential damages (including but not limited             *
+*    to procurement of substitute goods or services, loss of use, data, 	              * 
+*    interruption), however caused and on any theory of liability, whether in	          * 
+*    contract, strict liability or tort (including negligence) arising in any         	*
+*    way out of the use of the software, even if advised of the possibility of         	*
+*    such damage.						                                                        		* 
+*										                                                                    *
+* 5. It is permitted for the user to change the software, for the purpose of 	          *
+*    improving performance, correcting an error, or porting to a new platform, 	        *
+*    and distribute the derived version of Shen provided the resulting program 	        *
+*    conforms in all respects to the Shen standard and is issued under that             * 
+*    title. The user must make it clear with his distribution that he/she is 	          *
+*    the author of the changes and what these changes are and why. 		                  *
+*										                                                                    *
+* 6. Derived versions of this software in whatever form are subject to the same         *
+*    restrictions. In particular it is not permitted to make derived copies of          *
+*    this software which do not conform to the Shen standard or appear under a          *
+*    different title.								                                                    *
+*										                                                                    *
+*    It is permitted to distribute versions of Shen which incorporate libraries,        *
+*    graphics or other facilities which are not part of the Shen standard.	            *
+*										                                                                    *
+* For an explication of this license see www.shenlanguage.org/license.htm which         *
+* explains this license in full.                                                        *
+*				 						                                                                    *
+*****************************************************************************************
+"
+
+(DEFUN declare (V2114 V2115)
+  (LET ((Record
+         (set 'shen.*signedfuncs*
+              (CONS (CONS V2114 V2115) shen.*signedfuncs*))))
+    (LET ((Variancy
+           (trap-error (shen.variancy-test V2114 V2115)
+                       #'(LAMBDA (E) 'shen.skip))))
+      (LET ((Type (shen.rcons_form (shen.demodulate V2115))))
+        (LET ((F* (concat 'shen.type-signature-of- V2114)))
+          (LET ((Parameters (shen.parameters 1)))
+            (LET ((Clause
+                   (CONS (CONS F* (CONS 'X NIL))
+                         (CONS '|:-|
+                               (CONS
+                                (CONS (CONS 'unify! (CONS 'X (CONS Type NIL)))
+                                      NIL)
+                                NIL)))))
+              (LET ((AUM_instruction (shen.aum Clause Parameters)))
+                (LET ((Code (shen.aum_to_shen AUM_instruction)))
+                  (LET ((ShenDef
+                         (CONS 'define
+                               (CONS F*
+                                     (APPEND Parameters
+                                             (APPEND
+                                              (CONS 'ProcessN
+                                                    (CONS 'Continuation NIL))
+                                              (CONS '-> (CONS Code NIL))))))))
+                    (LET ((Eval (shen.eval-without-macros ShenDef)))
+                      V2114)))))))))))
+
+(DEFUN shen.demodulate (V2116) (fix 'shen.demodh V2116))
+
+(DEFUN shen.demodh (V2117)
+  (COND ((CONSP V2117) (map 'shen.demodh V2117)) (T (shen.demod-atom V2117))))
+
+(DEFUN shen.demod-atom (V2118)
+  (LET ((Val (assoc V2118 shen.*synonyms*)))
+    (IF (NULL Val)
+        V2118
+        (CDR Val))))
+
+(DEFUN shen.variancy-test (V2119 V2120)
+  (LET ((TypeF (shen.typecheck V2119 'B)))
+    (LET ((Check
+           (IF (EQ 'symbol TypeF)
+               'shen.skip
+               (IF (shen.wrapper (shen.variant? TypeF V2120))
+                   'shen.skip
+                   (shen.prhush
+                    (cn "warning: changing the type of "
+                        (shen.app V2119 " may create errors
+"
+                                  'shen.a))
+                    (stoutput))))))
+      'shen.skip)))
+
+(DEFUN shen.variant? (V2129 V2130)
+  (COND ((shen.ABSEQUAL V2130 V2129) 'true)
+        ((AND (CONSP V2129)
+              (AND (CONSP V2130) (shen.ABSEQUAL (CAR V2130) (CAR V2129))))
+         (shen.variant? (CDR V2129) (CDR V2130)))
+        ((AND (CONSP V2129)
+              (AND (CONSP V2130)
+                   (AND
+                    (AND (ARRAYP (CAR V2129)) (NOT (STRINGP (CAR V2129)))
+                         (EQ (AREF (CAR V2129) 0) 'shen.pvar))
+                    (shen.wrapper (variable? (CAR V2130))))))
+         (shen.variant? (subst 'shen.a (CAR V2129) (CDR V2129))
+          (subst 'shen.a (CAR V2130) (CDR V2130))))
+        ((AND (CONSP V2129)
+              (AND (CONSP (CAR V2129))
+                   (AND (CONSP V2130) (CONSP (CAR V2130)))))
+         (shen.variant? (APPEND (CAR V2129) (CDR V2129))
+          (APPEND (CAR V2130) (CDR V2130))))
+        (T 'false)))
+
+(declare 'absvector? (CONS 'A (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'adjoin
+ (CONS 'A
+       (CONS '-->
+             (CONS
+              (CONS (CONS 'list (CONS 'A NIL))
+                    (CONS '--> (CONS (CONS 'list (CONS 'A NIL)) NIL)))
+              NIL))))
+
+(declare 'and
+ (CONS 'boolean
+       (CONS '--> (CONS (CONS 'boolean (CONS '--> (CONS 'boolean NIL))) NIL))))
+
+(declare 'shen.app
+ (CONS 'A
+       (CONS '-->
+             (CONS
+              (CONS 'string
+                    (CONS '-->
+                          (CONS (CONS 'symbol (CONS '--> (CONS 'string NIL)))
+                                NIL)))
+              NIL))))
+
+(declare 'append
+ (CONS (CONS 'list (CONS 'A NIL))
+       (CONS '-->
+             (CONS
+              (CONS (CONS 'list (CONS 'A NIL))
+                    (CONS '--> (CONS (CONS 'list (CONS 'A NIL)) NIL)))
+              NIL))))
+
+(declare 'arity (CONS 'A (CONS '--> (CONS 'number NIL))))
+
+(declare 'assoc
+ (CONS 'A
+       (CONS '-->
+             (CONS
+              (CONS (CONS 'list (CONS (CONS 'list (CONS 'A NIL)) NIL))
+                    (CONS '--> (CONS (CONS 'list (CONS 'A NIL)) NIL)))
+              NIL))))
+
+(declare 'boolean? (CONS 'A (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'bound? (CONS 'symbol (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'cd (CONS 'string (CONS '--> (CONS 'string NIL))))
+
+(declare 'close
+ (CONS (CONS 'stream (CONS 'A NIL))
+       (CONS '--> (CONS (CONS 'list (CONS 'B NIL)) NIL))))
+
+(declare 'cn
+ (CONS 'string
+       (CONS '--> (CONS (CONS 'string (CONS '--> (CONS 'string NIL))) NIL))))
+
+(declare 'compile
+ (CONS (CONS (CONS 'list (CONS 'A NIL)) (CONS '==> (CONS 'B NIL)))
+       (CONS '-->
+             (CONS
+              (CONS (CONS 'list (CONS 'A NIL))
+                    (CONS '-->
+                          (CONS
+                           (CONS
+                            (CONS (CONS 'list (CONS 'A NIL))
+                                  (CONS '--> (CONS 'B NIL)))
+                            (CONS '--> (CONS 'B NIL)))
+                           NIL)))
+              NIL))))
+
+(declare 'cons? (CONS 'A (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'destroy
+ (CONS (CONS 'A (CONS '--> (CONS 'B NIL))) (CONS '--> (CONS 'symbol NIL))))
+
+(declare 'difference
+ (CONS (CONS 'list (CONS 'A NIL))
+       (CONS '-->
+             (CONS
+              (CONS (CONS 'list (CONS 'A NIL))
+                    (CONS '--> (CONS (CONS 'list (CONS 'A NIL)) NIL)))
+              NIL))))
+
+(declare 'do
+ (CONS 'A (CONS '--> (CONS (CONS 'B (CONS '--> (CONS 'B NIL))) NIL))))
+
+(declare '<e>
+ (CONS (CONS 'list (CONS 'A NIL))
+       (CONS '==> (CONS (CONS 'list (CONS 'B NIL)) NIL))))
+
+(declare '<!>
+ (CONS (CONS 'list (CONS 'A NIL))
+       (CONS '==> (CONS (CONS 'list (CONS 'A NIL)) NIL))))
+
+(declare 'element?
+ (CONS 'A
+       (CONS '-->
+             (CONS
+              (CONS (CONS 'list (CONS 'A NIL)) (CONS '--> (CONS 'boolean NIL)))
+              NIL))))
+
+(declare 'empty? (CONS 'A (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'enable-type-theory (CONS 'symbol (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'external
+ (CONS 'symbol (CONS '--> (CONS (CONS 'list (CONS 'symbol NIL)) NIL))))
+
+(declare 'error-to-string (CONS 'exception (CONS '--> (CONS 'string NIL))))
+
+(declare 'explode
+ (CONS 'A (CONS '--> (CONS (CONS 'list (CONS 'string NIL)) NIL))))
+
+(declare 'fail-if
+ (CONS (CONS 'symbol (CONS '--> (CONS 'boolean NIL)))
+       (CONS '--> (CONS (CONS 'symbol (CONS '--> (CONS 'symbol NIL))) NIL))))
+
+(declare 'fix
+ (CONS (CONS 'A (CONS '--> (CONS 'A NIL)))
+       (CONS '--> (CONS (CONS 'A (CONS '--> (CONS 'A NIL))) NIL))))
+
+(declare 'freeze (CONS 'A (CONS '--> (CONS (CONS 'lazy (CONS 'A NIL)) NIL))))
+
+(declare 'fst
+ (CONS (CONS 'A (CONS '* (CONS 'B NIL))) (CONS '--> (CONS 'A NIL))))
+
+(declare 'gensym (CONS 'symbol (CONS '--> (CONS 'symbol NIL))))
+
+(declare '<-vector
+ (CONS (CONS 'vector (CONS 'A NIL))
+       (CONS '--> (CONS (CONS 'number (CONS '--> (CONS 'A NIL))) NIL))))
+
+(declare 'vector->
+ (CONS (CONS 'vector (CONS 'A NIL))
+       (CONS '-->
+             (CONS
+              (CONS 'number
+                    (CONS '-->
+                          (CONS
+                           (CONS 'A
+                                 (CONS '-->
+                                       (CONS (CONS 'vector (CONS 'A NIL))
+                                             NIL)))
+                           NIL)))
+              NIL))))
+
+(declare 'vector
+ (CONS 'number (CONS '--> (CONS (CONS 'vector (CONS 'A NIL)) NIL))))
+
+(declare 'get-time (CONS 'symbol (CONS '--> (CONS 'number NIL))))
+
+(declare 'hash
+ (CONS 'A (CONS '--> (CONS (CONS 'number (CONS '--> (CONS 'number NIL))) NIL))))
+
+(declare 'head (CONS (CONS 'list (CONS 'A NIL)) (CONS '--> (CONS 'A NIL))))
+
+(declare 'hdv (CONS (CONS 'vector (CONS 'A NIL)) (CONS '--> (CONS 'A NIL))))
+
+(declare 'hdstr (CONS 'string (CONS '--> (CONS 'string NIL))))
+
+(declare 'if
+ (CONS 'boolean
+       (CONS '-->
+             (CONS
+              (CONS 'A
+                    (CONS '--> (CONS (CONS 'A (CONS '--> (CONS 'A NIL))) NIL)))
+              NIL))))
+
+(declare 'implementation (CONS '--> (CONS 'string NIL)))
+
+(declare 'include
+ (CONS (CONS 'list (CONS 'symbol NIL))
+       (CONS '--> (CONS (CONS 'list (CONS 'symbol NIL)) NIL))))
+
+(declare 'include-all-but
+ (CONS (CONS 'list (CONS 'symbol NIL))
+       (CONS '--> (CONS (CONS 'list (CONS 'symbol NIL)) NIL))))
+
+(declare 'inferences (CONS '--> (CONS 'number NIL)))
+
+(declare 'shen.insert
+ (CONS 'A (CONS '--> (CONS (CONS 'string (CONS '--> (CONS 'string NIL))) NIL))))
+
+(declare 'integer? (CONS 'A (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'intersection
+ (CONS (CONS 'list (CONS 'A NIL))
+       (CONS '-->
+             (CONS
+              (CONS (CONS 'list (CONS 'A NIL))
+                    (CONS '--> (CONS (CONS 'list (CONS 'A NIL)) NIL)))
+              NIL))))
+
+(declare 'language (CONS '--> (CONS 'string NIL)))
+
+(declare 'length
+ (CONS (CONS 'list (CONS 'A NIL)) (CONS '--> (CONS 'number NIL))))
+
+(declare 'limit
+ (CONS (CONS 'vector (CONS 'A NIL)) (CONS '--> (CONS 'number NIL))))
+
+(declare 'load (CONS 'string (CONS '--> (CONS 'symbol NIL))))
+
+(declare 'map
+ (CONS (CONS 'A (CONS '--> (CONS 'B NIL)))
+       (CONS '-->
+             (CONS
+              (CONS (CONS 'list (CONS 'A NIL))
+                    (CONS '--> (CONS (CONS 'list (CONS 'B NIL)) NIL)))
+              NIL))))
+
+(declare 'mapcan
+ (CONS (CONS 'A (CONS '--> (CONS (CONS 'list (CONS 'B NIL)) NIL)))
+       (CONS '-->
+             (CONS
+              (CONS (CONS 'list (CONS 'A NIL))
+                    (CONS '--> (CONS (CONS 'list (CONS 'B NIL)) NIL)))
+              NIL))))
+
+(declare 'maxinferences (CONS 'number (CONS '--> (CONS 'number NIL))))
+
+(declare 'n->string (CONS 'number (CONS '--> (CONS 'string NIL))))
+
+(declare 'nl (CONS 'number (CONS '--> (CONS 'number NIL))))
+
+(declare 'not (CONS 'boolean (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'nth
+ (CONS 'number
+       (CONS '-->
+             (CONS (CONS (CONS 'list (CONS 'A NIL)) (CONS '--> (CONS 'A NIL)))
+                   NIL))))
+
+(declare 'number? (CONS 'A (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'occurrences
+ (CONS 'A (CONS '--> (CONS (CONS 'B (CONS '--> (CONS 'number NIL))) NIL))))
+
+(declare 'occurs-check (CONS 'symbol (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'optimise (CONS 'symbol (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'or
+ (CONS 'boolean
+       (CONS '--> (CONS (CONS 'boolean (CONS '--> (CONS 'boolean NIL))) NIL))))
+
+(declare 'os (CONS '--> (CONS 'string NIL)))
+
+(declare 'port (CONS '--> (CONS 'string NIL)))
+
+(declare 'porters (CONS '--> (CONS 'string NIL)))
+
+(declare 'pos
+ (CONS 'string
+       (CONS '--> (CONS (CONS 'number (CONS '--> (CONS 'string NIL))) NIL))))
+
+(declare 'pr
+ (CONS 'string
+       (CONS '-->
+             (CONS
+              (CONS (CONS 'stream (CONS 'out NIL))
+                    (CONS '--> (CONS 'string NIL)))
+              NIL))))
+
+(declare 'print (CONS 'A (CONS '--> (CONS 'A NIL))))
+
+(declare 'profile
+ (CONS (CONS 'A (CONS '--> (CONS 'B NIL)))
+       (CONS '--> (CONS (CONS 'A (CONS '--> (CONS 'B NIL))) NIL))))
+
+(declare 'preclude
+ (CONS (CONS 'list (CONS 'symbol NIL))
+       (CONS '--> (CONS (CONS 'list (CONS 'symbol NIL)) NIL))))
+
+(declare 'shen.proc-nl (CONS 'string (CONS '--> (CONS 'string NIL))))
+
+(declare 'profile-results
+ (CONS (CONS 'A (CONS '--> (CONS 'B NIL)))
+       (CONS '-->
+             (CONS
+              (CONS (CONS 'A (CONS '--> (CONS 'B NIL)))
+                    (CONS '* (CONS 'number NIL)))
+              NIL))))
+
+(declare 'protect (CONS 'symbol (CONS '--> (CONS 'symbol NIL))))
+
+(declare 'preclude-all-but
+ (CONS (CONS 'list (CONS 'symbol NIL))
+       (CONS '--> (CONS (CONS 'list (CONS 'symbol NIL)) NIL))))
+
+(declare 'shen.prhush
+ (CONS 'string
+       (CONS '-->
+             (CONS
+              (CONS (CONS 'stream (CONS 'out NIL))
+                    (CONS '--> (CONS 'string NIL)))
+              NIL))))
+
+(declare 'ps
+ (CONS 'symbol (CONS '--> (CONS (CONS 'list (CONS 'unit NIL)) NIL))))
+
+(declare 'read-byte
+ (CONS (CONS 'stream (CONS 'in NIL)) (CONS '--> (CONS 'number NIL))))
+
+(declare 'read-file-as-bytelist
+ (CONS 'string (CONS '--> (CONS (CONS 'list (CONS 'number NIL)) NIL))))
+
+(declare 'read-file-as-string (CONS 'string (CONS '--> (CONS 'string NIL))))
+
+(declare 'read-file
+ (CONS 'string (CONS '--> (CONS (CONS 'list (CONS 'unit NIL)) NIL))))
+
+(declare 'read-from-string
+ (CONS 'string (CONS '--> (CONS (CONS 'list (CONS 'unit NIL)) NIL))))
+
+(declare 'release (CONS '--> (CONS 'string NIL)))
+
+(declare 'remove
+ (CONS 'A
+       (CONS '-->
+             (CONS
+              (CONS (CONS 'list (CONS 'A NIL))
+                    (CONS '--> (CONS (CONS 'list (CONS 'A NIL)) NIL)))
+              NIL))))
+
+(declare 'reverse
+ (CONS (CONS 'list (CONS 'A NIL))
+       (CONS '--> (CONS (CONS 'list (CONS 'A NIL)) NIL))))
+
+(declare 'simple-error (CONS 'string (CONS '--> (CONS 'A NIL))))
+
+(declare 'snd
+ (CONS (CONS 'A (CONS '* (CONS 'B NIL))) (CONS '--> (CONS 'B NIL))))
+
+(declare 'specialise (CONS 'symbol (CONS '--> (CONS 'symbol NIL))))
+
+(declare 'spy (CONS 'symbol (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'step (CONS 'symbol (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'stinput (CONS '--> (CONS (CONS 'stream (CONS 'in NIL)) NIL)))
+
+(declare 'stoutput (CONS '--> (CONS (CONS 'stream (CONS 'out NIL)) NIL)))
+
+(declare 'string? (CONS 'A (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'str (CONS 'A (CONS '--> (CONS 'string NIL))))
+
+(declare 'string->n (CONS 'string (CONS '--> (CONS 'number NIL))))
+
+(declare 'string->symbol (CONS 'string (CONS '--> (CONS 'symbol NIL))))
+
+(declare 'sum
+ (CONS (CONS 'list (CONS 'number NIL)) (CONS '--> (CONS 'number NIL))))
+
+(declare 'symbol? (CONS 'A (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'systemf
+ (CONS 'symbol (CONS '--> (CONS (CONS 'list (CONS 'symbol NIL)) NIL))))
+
+(declare 'tail
+ (CONS (CONS 'list (CONS 'A NIL))
+       (CONS '--> (CONS (CONS 'list (CONS 'A NIL)) NIL))))
+
+(declare 'tlstr (CONS 'string (CONS '--> (CONS 'string NIL))))
+
+(declare 'tlv
+ (CONS (CONS 'vector (CONS 'A NIL))
+       (CONS '--> (CONS (CONS 'vector (CONS 'A NIL)) NIL))))
+
+(declare 'tc (CONS 'symbol (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'tc? (CONS '--> (CONS 'boolean NIL)))
+
+(declare 'thaw (CONS (CONS 'lazy (CONS 'A NIL)) (CONS '--> (CONS 'A NIL))))
+
+(declare 'track (CONS 'symbol (CONS '--> (CONS 'symbol NIL))))
+
+(declare 'trap-error
+ (CONS 'A
+       (CONS '-->
+             (CONS
+              (CONS (CONS 'exception (CONS '--> (CONS 'A NIL)))
+                    (CONS '--> (CONS 'A NIL)))
+              NIL))))
+
+(declare 'tuple? (CONS 'A (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'undefmacro (CONS 'symbol (CONS '--> (CONS 'symbol NIL))))
+
+(declare 'union
+ (CONS (CONS 'list (CONS 'A NIL))
+       (CONS '-->
+             (CONS
+              (CONS (CONS 'list (CONS 'A NIL))
+                    (CONS '--> (CONS (CONS 'list (CONS 'A NIL)) NIL)))
+              NIL))))
+
+(declare 'unprofile
+ (CONS (CONS 'A (CONS '--> (CONS 'B NIL)))
+       (CONS '--> (CONS (CONS 'A (CONS '--> (CONS 'B NIL))) NIL))))
+
+(declare 'untrack (CONS 'symbol (CONS '--> (CONS 'symbol NIL))))
+
+(declare 'unspecialise (CONS 'symbol (CONS '--> (CONS 'symbol NIL))))
+
+(declare 'variable? (CONS 'A (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'vector? (CONS 'A (CONS '--> (CONS 'boolean NIL))))
+
+(declare 'version (CONS '--> (CONS 'string NIL)))
+
+(declare 'write-to-file
+ (CONS 'string (CONS '--> (CONS (CONS 'A (CONS '--> (CONS 'A NIL))) NIL))))
+
+(declare 'write-byte
+ (CONS 'number
+       (CONS '-->
+             (CONS
+              (CONS (CONS 'stream (CONS 'out NIL))
+                    (CONS '--> (CONS 'number NIL)))
+              NIL))))
+
+(declare 'y-or-n? (CONS 'string (CONS '--> (CONS 'boolean NIL))))
+
+(declare '>
+ (CONS 'number
+       (CONS '--> (CONS (CONS 'number (CONS '--> (CONS 'boolean NIL))) NIL))))
+
+(declare '<
+ (CONS 'number
+       (CONS '--> (CONS (CONS 'number (CONS '--> (CONS 'boolean NIL))) NIL))))
+
+(declare '>=
+ (CONS 'number
+       (CONS '--> (CONS (CONS 'number (CONS '--> (CONS 'boolean NIL))) NIL))))
+
+(declare '<=
+ (CONS 'number
+       (CONS '--> (CONS (CONS 'number (CONS '--> (CONS 'boolean NIL))) NIL))))
+
+(declare '=
+ (CONS 'A (CONS '--> (CONS (CONS 'A (CONS '--> (CONS 'boolean NIL))) NIL))))
+
+(declare '+
+ (CONS 'number
+       (CONS '--> (CONS (CONS 'number (CONS '--> (CONS 'number NIL))) NIL))))
+
+(declare '/
+ (CONS 'number
+       (CONS '--> (CONS (CONS 'number (CONS '--> (CONS 'number NIL))) NIL))))
+
+(declare '-
+ (CONS 'number
+       (CONS '--> (CONS (CONS 'number (CONS '--> (CONS 'number NIL))) NIL))))
+
+(declare '*
+ (CONS 'number
+       (CONS '--> (CONS (CONS 'number (CONS '--> (CONS 'number NIL))) NIL))))
+
+(declare '==
+ (CONS 'A (CONS '--> (CONS (CONS 'B (CONS '--> (CONS 'boolean NIL))) NIL))))
+

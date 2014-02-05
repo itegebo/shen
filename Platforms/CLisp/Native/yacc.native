@@ -1,0 +1,428 @@
+
+"**********************************************************************************
+
+*                           The License						                                      *
+
+* 										                                                                  *
+
+* The user is free to produce commercial applications with the software, to 	          *
+
+* distribute these applications in source or binary  form, and to charge monies         *
+
+* for them as he sees fit and in concordance with the laws of the land subject 	        *
+
+* to the following license.							                                                *
+
+*										                                                                    * 
+
+* 1. The license applies to all the software and all derived software and 	            *
+
+*    must appear on such.							                                                  *
+
+*										                                                                    *
+
+* 2. It is illegal to distribute the software without this license attached	            *
+
+*    to it and use of the software implies agreement with the license as such.          *
+
+*    It is illegal for anyone who is not the copyright holder to tamper with 	          *
+
+*    or change the license.							                                                *
+
+*										                                                                    *
+
+* 3. Neither the names of Lambda Associates or the copyright holder may be used         *
+
+*    to endorse or promote products built using the software without specific 	        *
+
+*    prior written permission from the copyright holder.		                            *
+
+*										                                                                    *
+
+* 4. That possession of this license does not confer on the copyright holder 	          *
+
+*    any special contractual obligation towards the user. That in no event 	            * 
+
+*    shall the copyright holder be liable for any direct, indirect, incidental,        *   
+
+*    special, exemplary or consequential damages (including but not limited             *
+
+*    to procurement of substitute goods or services, loss of use, data, 	              * 
+
+*    interruption), however caused and on any theory of liability, whether in	          * 
+
+*    contract, strict liability or tort (including negligence) arising in any         	*
+
+*    way out of the use of the software, even if advised of the possibility of         	*
+
+*    such damage.						                                                        		* 
+
+*										                                                                    *
+
+* 5. It is permitted for the user to change the software, for the purpose of 	          *
+
+*    improving performance, correcting an error, or porting to a new platform, 	        *
+
+*    and distribute the derived version of Shen provided the resulting program 	        *
+
+*    conforms in all respects to the Shen standard and is issued under that             * 
+
+*    title. The user must make it clear with his distribution that he/she is 	          *
+
+*    the author of the changes and what these changes are and why. 		                  *
+
+*										                                                                    *
+
+* 6. Derived versions of this software in whatever form are subject to the same         *
+
+*    restrictions. In particular it is not permitted to make derived copies of          *
+
+*    this software which do not conform to the Shen standard or appear under a          *
+
+*    different title.								                                                    *
+
+*										                                                                    *
+
+*    It is permitted to distribute versions of Shen which incorporate libraries,        *
+
+*    graphics or other facilities which are not part of the Shen standard.	            *
+
+*										                                                                    *
+
+* For an explication of this license see www.shenlanguage.org/license.htm which         *
+
+* explains this license in full.                                                        *
+
+*				 						                                                                    *
+
+*****************************************************************************************
+
+"
+
+(DEFUN shen.yacc (V2133)
+ (COND
+  ((AND (CONSP V2133)
+    (AND (EQ 'defcc (CAR V2133))
+     (AND (CONSP (CDR V2133))
+      (AND (CONSP (CDR (CDR V2133)))
+       (AND (EQ '{ (CAR (CDR (CDR V2133))))
+        (AND (CONSP (CDR (CDR (CDR V2133))))
+         (AND (CONSP (CDR (CDR (CDR (CDR V2133)))))
+          (AND (EQ '==> (CAR (CDR (CDR (CDR (CDR V2133))))))
+           (AND (CONSP (CDR (CDR (CDR (CDR (CDR V2133))))))
+            (AND (CONSP (CDR (CDR (CDR (CDR (CDR (CDR V2133)))))))
+             (EQ '} (CAR (CDR (CDR (CDR (CDR (CDR (CDR V2133))))))))))))))))))
+   (shen.yacc
+    (CONS 'defcc
+     (CONS (CAR (CDR V2133))
+      (CDR (CDR (CDR (CDR (CDR (CDR (CDR V2133)))))))))))
+  ((AND (CONSP V2133) (AND (EQ 'defcc (CAR V2133)) (CONSP (CDR V2133))))
+   (shen.yacc->shen (CAR (CDR V2133)) (CDR (CDR V2133))))
+  (T (shen.sys-error 'shen.yacc))))
+
+(DEFUN shen.yacc->shen (V2134 V2135)
+ (LET ((CCRules (shen.split_cc_rules 'true V2135 NIL)))
+  (LET ((CCBody (map 'shen.cc_body CCRules)))
+   (LET ((YaccCases (shen.yacc_cases CCBody)))
+    (CONS 'define
+     (CONS V2134 (CONS 'Stream (CONS '-> (CONS YaccCases NIL)))))))))
+
+(DEFUN shen.split_cc_rules (V2138 V2139 V2140)
+ (COND ((AND (NULL V2139) (NULL V2140)) NIL)
+  ((NULL V2139) (CONS (shen.split_cc_rule V2138 (REVERSE V2140) NIL) NIL))
+  ((AND (CONSP V2139) (EQ '|;| (CAR V2139)))
+   (CONS (shen.split_cc_rule V2138 (REVERSE V2140) NIL)
+    (shen.split_cc_rules V2138 (CDR V2139) NIL)))
+  ((CONSP V2139)
+   (shen.split_cc_rules V2138 (CDR V2139) (CONS (CAR V2139) V2140)))
+  (T (shen.sys-error 'shen.split_cc_rules))))
+
+(DEFUN shen.split_cc_rule (V2145 V2146 V2147)
+ (COND
+  ((AND (CONSP V2146)
+    (AND (EQ '|:=| (CAR V2146))
+     (AND (CONSP (CDR V2146)) (NULL (CDR (CDR V2146))))))
+   (CONS (REVERSE V2147) (CDR V2146)))
+  ((AND (CONSP V2146)
+    (AND (EQ '|:=| (CAR V2146))
+     (AND (CONSP (CDR V2146))
+      (AND (CONSP (CDR (CDR V2146)))
+       (AND (EQ 'where (CAR (CDR (CDR V2146))))
+        (AND (CONSP (CDR (CDR (CDR V2146))))
+         (NULL (CDR (CDR (CDR (CDR V2146)))))))))))
+   (CONS (REVERSE V2147)
+    (CONS
+     (CONS 'where
+      (CONS (CAR (CDR (CDR (CDR V2146)))) (CONS (CAR (CDR V2146)) NIL)))
+     NIL)))
+  ((NULL V2146)
+   (do (shen.semantic-completion-warning V2145 V2147)
+    (shen.split_cc_rule V2145
+     (CONS '|:=| (CONS (shen.default_semantics (REVERSE V2147)) NIL)) V2147)))
+  ((CONSP V2146)
+   (shen.split_cc_rule V2145 (CDR V2146) (CONS (CAR V2146) V2147)))
+  (T (shen.sys-error 'shen.split_cc_rule))))
+
+(DEFUN shen.semantic-completion-warning (V2156 V2157)
+ (COND
+  ((EQ 'true V2156)
+   (do (shen.prhush "warning: " (stoutput))
+    (do
+     (map #'(LAMBDA (X) (shen.prhush (shen.app X " " 'shen.a) (stoutput)))
+      (REVERSE V2157))
+     (shen.prhush
+      "has no semantics.
+"
+      (stoutput)))))
+  (T 'shen.skip)))
+
+(DEFUN shen.default_semantics (V2158)
+ (COND ((NULL V2158) NIL)
+  ((AND (CONSP V2158)
+    (AND (NULL (CDR V2158)) (shen.wrapper (shen.grammar_symbol? (CAR V2158)))))
+   (CAR V2158))
+  ((AND (CONSP V2158) (shen.wrapper (shen.grammar_symbol? (CAR V2158))))
+   (CONS 'append
+    (CONS (CAR V2158) (CONS (shen.default_semantics (CDR V2158)) NIL))))
+  ((CONSP V2158)
+   (CONS 'cons
+    (CONS (CAR V2158) (CONS (shen.default_semantics (CDR V2158)) NIL))))
+  (T (shen.sys-error 'shen.default_semantics))))
+
+(DEFUN shen.grammar_symbol? (V2159)
+ (and (symbol? V2159)
+  (LET ((Cs (shen.strip-pathname (explode V2159))))
+   (and (shen.equal? (CAR Cs) "<") (shen.equal? (CAR (REVERSE Cs)) ">")))))
+
+(DEFUN shen.yacc_cases (V2160)
+ (COND ((AND (CONSP V2160) (NULL (CDR V2160))) (CAR V2160))
+  ((CONSP V2160)
+   (LET ((P 'YaccParse))
+    (CONS 'let
+     (CONS P
+      (CONS (CAR V2160)
+       (CONS
+        (CONS 'if
+         (CONS (CONS '= (CONS P (CONS (CONS 'fail NIL) NIL)))
+          (CONS (shen.yacc_cases (CDR V2160)) (CONS P NIL))))
+        NIL))))))
+  (T (shen.sys-error 'shen.yacc_cases))))
+
+(DEFUN shen.cc_body (V2161)
+ (COND
+  ((AND (CONSP V2161) (AND (CONSP (CDR V2161)) (NULL (CDR (CDR V2161)))))
+   (shen.syntax (CAR V2161) 'Stream (CAR (CDR V2161))))
+  (T (shen.sys-error 'shen.cc_body))))
+
+(DEFUN shen.syntax (V2162 V2163 V2164)
+ (COND
+  ((AND (NULL V2162)
+    (AND (CONSP V2164)
+     (AND (EQ 'where (CAR V2164))
+      (AND (CONSP (CDR V2164))
+       (AND (CONSP (CDR (CDR V2164))) (NULL (CDR (CDR (CDR V2164)))))))))
+   (CONS 'if
+    (CONS (shen.semantics (CAR (CDR V2164)))
+     (CONS
+      (CONS 'shen.pair
+       (CONS (CONS 'hd (CONS V2163 NIL))
+        (CONS (shen.semantics (CAR (CDR (CDR V2164)))) NIL)))
+      (CONS (CONS 'fail NIL) NIL)))))
+  ((NULL V2162)
+   (CONS 'shen.pair
+    (CONS (CONS 'hd (CONS V2163 NIL)) (CONS (shen.semantics V2164) NIL))))
+  ((CONSP V2162)
+   (IF (shen.wrapper (shen.grammar_symbol? (CAR V2162)))
+    (shen.recursive_descent V2162 V2163 V2164)
+    (IF (shen.wrapper (variable? (CAR V2162)))
+     (shen.variable-match V2162 V2163 V2164)
+     (IF (shen.wrapper (shen.jump_stream? (CAR V2162)))
+      (shen.jump_stream V2162 V2163 V2164)
+      (IF (shen.wrapper (shen.terminal? (CAR V2162)))
+       (shen.check_stream V2162 V2163 V2164)
+       (IF (CONSP (CAR V2162))
+        (shen.list-stream (shen.decons (CAR V2162)) (CDR V2162) V2163 V2164)
+        (simple-error
+         (shen.app (CAR V2162)
+          " is not legal syntax
+"
+          'shen.a))))))))
+  (T (shen.sys-error 'shen.syntax))))
+
+(DEFUN shen.list-stream (V2165 V2166 V2167 V2168)
+ (LET
+  ((Test
+    (CONS 'and
+     (CONS (CONS 'cons? (CONS (CONS 'hd (CONS V2167 NIL)) NIL))
+      (CONS
+       (CONS 'cons?
+        (CONS (CONS 'hd (CONS (CONS 'hd (CONS V2167 NIL)) NIL)) NIL))
+       NIL)))))
+  (LET ((Placeholder (gensym 'shen.place)))
+   (LET
+    ((RunOn
+      (shen.syntax V2166
+       (CONS 'shen.pair
+        (CONS (CONS 'tl (CONS (CONS 'hd (CONS V2167 NIL)) NIL))
+         (CONS (CONS 'hd (CONS (CONS 'tl (CONS V2167 NIL)) NIL)) NIL)))
+       V2168)))
+    (LET
+     ((Action
+       (shen.insert-runon RunOn Placeholder
+        (shen.syntax V2165
+         (CONS 'shen.pair
+          (CONS (CONS 'hd (CONS (CONS 'hd (CONS V2167 NIL)) NIL))
+           (CONS (CONS 'hd (CONS (CONS 'tl (CONS V2167 NIL)) NIL)) NIL)))
+         Placeholder))))
+     (CONS 'if (CONS Test (CONS Action (CONS (CONS 'fail NIL) NIL)))))))))
+
+(DEFUN shen.decons (V2169)
+ (COND
+  ((AND (CONSP V2169)
+    (AND (EQ 'cons (CAR V2169))
+     (AND (CONSP (CDR V2169))
+      (AND (CONSP (CDR (CDR V2169)))
+       (AND (NULL (CAR (CDR (CDR V2169)))) (NULL (CDR (CDR (CDR V2169)))))))))
+   (CONS (CAR (CDR V2169)) NIL))
+  ((AND (CONSP V2169)
+    (AND (EQ 'cons (CAR V2169))
+     (AND (CONSP (CDR V2169))
+      (AND (CONSP (CDR (CDR V2169))) (NULL (CDR (CDR (CDR V2169))))))))
+   (CONS (CAR (CDR V2169)) (shen.decons (CAR (CDR (CDR V2169))))))
+  (T V2169)))
+
+(DEFUN shen.insert-runon (V2180 V2181 V2182)
+ (COND
+  ((AND (CONSP V2182)
+    (AND (EQ 'shen.pair (CAR V2182))
+     (AND (CONSP (CDR V2182))
+      (AND (CONSP (CDR (CDR V2182)))
+       (AND (NULL (CDR (CDR (CDR V2182))))
+        (shen.ABSEQUAL (CAR (CDR (CDR V2182))) V2181))))))
+   V2180)
+  ((CONSP V2182) (map #'(LAMBDA (Z) (shen.insert-runon V2180 V2181 Z)) V2182))
+  (T V2182)))
+
+(DEFUN shen.strip-pathname (V2188)
+ (COND ((NOT (shen.wrapper (element? "." V2188))) V2188)
+  ((CONSP V2188) (shen.strip-pathname (CDR V2188)))
+  (T (shen.sys-error 'shen.strip-pathname))))
+
+(DEFUN shen.recursive_descent (V2189 V2190 V2191)
+ (COND
+  ((CONSP V2189)
+   (LET ((Test (CONS (CAR V2189) (CONS V2190 NIL))))
+    (LET
+     ((Action (shen.syntax (CDR V2189) (concat 'Parse_ (CAR V2189)) V2191)))
+     (LET ((Else (CONS 'fail NIL)))
+      (CONS 'let
+       (CONS (concat 'Parse_ (CAR V2189))
+        (CONS Test
+         (CONS
+          (CONS 'if
+           (CONS
+            (CONS 'not
+             (CONS
+              (CONS '=
+               (CONS (CONS 'fail NIL) (CONS (concat 'Parse_ (CAR V2189)) NIL)))
+              NIL))
+            (CONS Action (CONS Else NIL))))
+          NIL))))))))
+  (T (shen.sys-error 'shen.recursive_descent))))
+
+(DEFUN shen.variable-match (V2192 V2193 V2194)
+ (COND
+  ((CONSP V2192)
+   (LET ((Test (CONS 'cons? (CONS (CONS 'hd (CONS V2193 NIL)) NIL))))
+    (LET
+     ((Action
+       (CONS 'let
+        (CONS (concat 'Parse_ (CAR V2192))
+         (CONS (CONS 'hd (CONS (CONS 'hd (CONS V2193 NIL)) NIL))
+          (CONS
+           (shen.syntax (CDR V2192)
+            (CONS 'shen.pair
+             (CONS (CONS 'tl (CONS (CONS 'hd (CONS V2193 NIL)) NIL))
+              (CONS (CONS 'shen.hdtl (CONS V2193 NIL)) NIL)))
+            V2194)
+           NIL))))))
+     (LET ((Else (CONS 'fail NIL)))
+      (CONS 'if (CONS Test (CONS Action (CONS Else NIL))))))))
+  (T (shen.sys-error 'shen.variable-match))))
+
+(DEFUN shen.terminal? (V2203)
+ (COND ((CONSP V2203) 'false) ((shen.wrapper (variable? V2203)) 'false)
+  (T 'true)))
+
+(DEFUN shen.jump_stream? (V2208)
+ (COND ((shen.ABSEQUAL V2208 '_) 'true) (T 'false)))
+
+(DEFUN shen.check_stream (V2209 V2210 V2211)
+ (COND
+  ((CONSP V2209)
+   (LET
+    ((Test
+      (CONS 'and
+       (CONS (CONS 'cons? (CONS (CONS 'hd (CONS V2210 NIL)) NIL))
+        (CONS
+         (CONS '=
+          (CONS (CAR V2209)
+           (CONS (CONS 'hd (CONS (CONS 'hd (CONS V2210 NIL)) NIL)) NIL)))
+         NIL)))))
+    (LET
+     ((Action
+       (shen.syntax (CDR V2209)
+        (CONS 'shen.pair
+         (CONS (CONS 'tl (CONS (CONS 'hd (CONS V2210 NIL)) NIL))
+          (CONS (CONS 'shen.hdtl (CONS V2210 NIL)) NIL)))
+        V2211)))
+     (LET ((Else (CONS 'fail NIL)))
+      (CONS 'if (CONS Test (CONS Action (CONS Else NIL))))))))
+  (T (shen.sys-error 'shen.check_stream))))
+
+(DEFUN shen.jump_stream (V2212 V2213 V2214)
+ (COND
+  ((CONSP V2212)
+   (LET ((Test (CONS 'cons? (CONS (CONS 'hd (CONS V2213 NIL)) NIL))))
+    (LET
+     ((Action
+       (shen.syntax (CDR V2212)
+        (CONS 'shen.pair
+         (CONS (CONS 'tl (CONS (CONS 'hd (CONS V2213 NIL)) NIL))
+          (CONS (CONS 'shen.hdtl (CONS V2213 NIL)) NIL)))
+        V2214)))
+     (LET ((Else (CONS 'fail NIL)))
+      (CONS 'if (CONS Test (CONS Action (CONS Else NIL))))))))
+  (T (shen.sys-error 'shen.jump_stream))))
+
+(DEFUN shen.semantics (V2215)
+ (COND ((NULL V2215) NIL)
+  ((shen.wrapper (shen.grammar_symbol? V2215))
+   (CONS 'shen.hdtl (CONS (concat 'Parse_ V2215) NIL)))
+  ((shen.wrapper (variable? V2215)) (concat 'Parse_ V2215))
+  ((CONSP V2215) (map 'shen.semantics V2215)) (T V2215)))
+
+(DEFUN shen.snd-or-fail (V2222)
+ (COND
+  ((AND (CONSP V2222) (AND (CONSP (CDR V2222)) (NULL (CDR (CDR V2222)))))
+   (CAR (CDR V2222)))
+  (T (fail))))
+
+(DEFUN fail NIL 'shen.fail!)
+
+(DEFUN shen.pair (V2223 V2224) (CONS V2223 (CONS V2224 NIL)))
+
+(DEFUN shen.hdtl (V2225) (CAR (CDR V2225)))
+
+(DEFUN <!> (V2232)
+ (COND
+  ((AND (CONSP V2232) (AND (CONSP (CDR V2232)) (NULL (CDR (CDR V2232)))))
+   (CONS NIL (CONS (CAR V2232) NIL)))
+  (T (fail))))
+
+(DEFUN <e> (V2237)
+ (COND
+  ((AND (CONSP V2237) (AND (CONSP (CDR V2237)) (NULL (CDR (CDR V2237)))))
+   (CONS (CAR V2237) (CONS NIL NIL)))
+  (T (shen.sys-error '<e>))))
+

@@ -1,0 +1,1290 @@
+
+"**********************************************************************************
+
+*                           The License						                                      *
+
+* 										                                                                  *
+
+* The user is free to produce commercial applications with the software, to 	          *
+
+* distribute these applications in source or binary  form, and to charge monies         *
+
+* for them as he sees fit and in concordance with the laws of the land subject 	        *
+
+* to the following license.							                                                *
+
+*										                                                                    * 
+
+* 1. The license applies to all the software and all derived software and 	            *
+
+*    must appear on such.							                                                  *
+
+*										                                                                    *
+
+* 2. It is illegal to distribute the software without this license attached	            *
+
+*    to it and use of the software implies agreement with the license as such.          *
+
+*    It is illegal for anyone who is not the copyright holder to tamper with 	          *
+
+*    or change the license.							                                                *
+
+*										                                                                    *
+
+* 3. Neither the names of Lambda Associates or the copyright holder may be used         *
+
+*    to endorse or promote products built using the software without specific 	        *
+
+*    prior written permission from the copyright holder.		                            *
+
+*										                                                                    *
+
+* 4. That possession of this license does not confer on the copyright holder 	          *
+
+*    any special contractual obligation towards the user. That in no event 	            * 
+
+*    shall the copyright holder be liable for any direct, indirect, incidental,        *   
+
+*    special, exemplary or consequential damages (including but not limited             *
+
+*    to procurement of substitute goods or services, loss of use, data, 	              * 
+
+*    interruption), however caused and on any theory of liability, whether in	          * 
+
+*    contract, strict liability or tort (including negligence) arising in any         	*
+
+*    way out of the use of the software, even if advised of the possibility of         	*
+
+*    such damage.						                                                        		* 
+
+*										                                                                    *
+
+* 5. It is permitted for the user to change the software, for the purpose of 	          *
+
+*    improving performance, correcting an error, or porting to a new platform, 	        *
+
+*    and distribute the derived version of Shen provided the resulting program 	        *
+
+*    conforms in all respects to the Shen standard and is issued under that             * 
+
+*    title. The user must make it clear with his distribution that he/she is 	          *
+
+*    the author of the changes and what these changes are and why. 		                  *
+
+*										                                                                    *
+
+* 6. Derived versions of this software in whatever form are subject to the same         *
+
+*    restrictions. In particular it is not permitted to make derived copies of          *
+
+*    this software which do not conform to the Shen standard or appear under a          *
+
+*    different title.								                                                    *
+
+*										                                                                    *
+
+*    It is permitted to distribute versions of Shen which incorporate libraries,        *
+
+*    graphics or other facilities which are not part of the Shen standard.	            *
+
+*										                                                                    *
+
+* For an explication of this license see www.shenlanguage.org/license.htm which         *
+
+* explains this license in full.                                                        *
+
+*				 						                                                                    *
+
+*****************************************************************************************
+
+"
+
+(DEFUN read-file-as-bytelist (V1314)
+ (LET ((Stream (open V1314 'in)))
+  (LET ((Byte (read-byte Stream)))
+   (LET ((Bytes (shen.read-file-as-bytelist-help Stream Byte NIL)))
+    (LET ((Close (close Stream))) (REVERSE Bytes))))))
+
+(DEFUN shen.read-file-as-bytelist-help (V1315 V1316 V1317)
+ (COND ((shen.ABSEQUAL -1 V1316) V1317)
+  (T
+   (shen.read-file-as-bytelist-help V1315 (read-byte V1315)
+    (CONS V1316 V1317)))))
+
+(DEFUN read-file-as-string (V1318)
+ (LET ((Stream (open V1318 'in))) (shen.rfas-h Stream (read-byte Stream) "")))
+
+(DEFUN shen.rfas-h (V1319 V1320 V1321)
+ (COND ((shen.ABSEQUAL -1 V1320) (do (close V1319) V1321))
+  (T (shen.rfas-h V1319 (read-byte V1319) (cn V1321 (n->string V1320))))))
+
+(DEFUN input (V1322) (eval-kl (read V1322)))
+
+(DEFUN input+ (V1323 V1324)
+ (LET ((Mono? (shen.monotype V1323)))
+  (LET ((Input (read V1324)))
+   (IF (EQ 'false (shen.typecheck Input V1323))
+    (simple-error
+     (cn "type error: "
+      (shen.app Input
+       (cn " is not of type "
+        (shen.app V1323
+         "
+"
+         'shen.r))
+       'shen.r)))
+    (eval-kl Input)))))
+
+(DEFUN shen.monotype (V1325)
+ (COND ((CONSP V1325) (map 'shen.monotype V1325))
+  (T
+   (IF (shen.wrapper (variable? V1325))
+    (simple-error
+     (cn "input+ expects a monotype: not "
+      (shen.app V1325
+       "
+"
+       'shen.a)))
+    V1325))))
+
+(DEFUN read (V1326) (CAR (shen.read-loop V1326 (read-byte V1326) NIL)))
+
+(DEFUN shen.read-loop (V1329 V1330 V1331)
+ (COND
+  ((shen.ABSEQUAL -1 V1330)
+   (IF (NULL V1331) (simple-error "error: empty stream")
+    (compile 'shen.<st_input> V1331 #'(LAMBDA (E) E))))
+  ((shen.wrapper (shen.terminator? V1330))
+   (LET ((AllBytes (APPEND V1331 (CONS V1330 NIL))))
+    (LET
+     ((Read (compile 'shen.<st_input> AllBytes #'(LAMBDA (E) 'shen.nextbyte))))
+     (IF (OR (shen.ABSEQUAL Read 'shen.nextbyte) (NULL Read))
+      (shen.read-loop V1329 (read-byte V1329) AllBytes) Read))))
+  (T
+   (shen.read-loop V1329 (read-byte V1329) (APPEND V1331 (CONS V1330 NIL))))))
+
+(DEFUN shen.terminator? (V1332)
+ (element? V1332
+  (CONS 9 (CONS 10 (CONS 13 (CONS 32 (CONS 34 (CONS 41 (CONS 93 NIL)))))))))
+
+(DEFUN lineread (V1333) (shen.lineread-loop (read-byte V1333) NIL V1333))
+
+(DEFUN shen.lineread-loop (V1335 V1336 V1337)
+ (COND
+  ((shen.ABSEQUAL -1 V1335)
+   (IF (NULL V1336) (simple-error "empty stream")
+    (compile 'shen.<st_input> V1336 #'(LAMBDA (E) E))))
+  ((shen.ABSEQUAL V1335 (shen.hat)) (simple-error "line read aborted"))
+  ((shen.wrapper
+    (element? V1335 (CONS (shen.newline) (CONS (shen.carriage-return) NIL))))
+   (LET ((Line (compile 'shen.<st_input> V1336 #'(LAMBDA (E) 'shen.nextline))))
+    (IF (OR (shen.ABSEQUAL Line 'shen.nextline) (NULL Line))
+     (shen.lineread-loop (read-byte V1337) (APPEND V1336 (CONS V1335 NIL))
+      V1337)
+     Line)))
+  (T
+   (shen.lineread-loop (read-byte V1337) (APPEND V1336 (CONS V1335 NIL))
+    V1337))))
+
+(DEFUN read-file (V1338)
+ (LET ((Bytelist (read-file-as-bytelist V1338)))
+  (compile 'shen.<st_input> Bytelist 'shen.read-error)))
+
+(DEFUN read-from-string (V1339)
+ (LET ((Ns (map #'(LAMBDA (V1313) (string->n V1313)) (explode V1339))))
+  (compile 'shen.<st_input> Ns 'shen.read-error)))
+
+(DEFUN shen.read-error (V1346)
+ (COND
+  ((AND (CONSP V1346)
+    (AND (CONSP (CAR V1346))
+     (AND (CONSP (CDR V1346)) (NULL (CDR (CDR V1346))))))
+   (simple-error
+    (cn
+     "read error here:
+
+ "
+     (shen.app (shen.compress-50 50 (CAR V1346))
+      "
+"
+      'shen.a))))
+  (T
+   (simple-error
+    "read error
+"))))
+
+(DEFUN shen.compress-50 (V1351 V1352)
+ (COND ((NULL V1352) "") ((shen.ABSEQUAL 0 V1351) "")
+  ((CONSP V1352)
+   (cn (n->string (CAR V1352)) (shen.compress-50 (1- V1351) (CDR V1352))))
+  (T (shen.sys-error 'shen.compress-50))))
+
+(DEFUN shen.<st_input> (V1357)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<lsb> (shen.<lsb> V1357)))
+     (IF (NOT (EQ (fail) Parse_shen.<lsb>))
+      (LET ((Parse_shen.<st_input1> (shen.<st_input1> Parse_shen.<lsb>)))
+       (IF (NOT (EQ (fail) Parse_shen.<st_input1>))
+        (LET ((Parse_shen.<rsb> (shen.<rsb> Parse_shen.<st_input1>)))
+         (IF (NOT (EQ (fail) Parse_shen.<rsb>))
+          (LET ((Parse_shen.<st_input2> (shen.<st_input2> Parse_shen.<rsb>)))
+           (IF (NOT (EQ (fail) Parse_shen.<st_input2>))
+            (shen.pair (CAR Parse_shen.<st_input2>)
+             (CONS
+              (macroexpand (shen.cons_form (shen.hdtl Parse_shen.<st_input1>)))
+              (shen.hdtl Parse_shen.<st_input2>)))
+            (fail)))
+          (fail)))
+        (fail)))
+      (fail)))))
+  (IF (EQ Result (fail))
+   (LET
+    ((Result
+      (LET ((Parse_shen.<lrb> (shen.<lrb> V1357)))
+       (IF (NOT (EQ (fail) Parse_shen.<lrb>))
+        (LET ((Parse_shen.<st_input1> (shen.<st_input1> Parse_shen.<lrb>)))
+         (IF (NOT (EQ (fail) Parse_shen.<st_input1>))
+          (LET ((Parse_shen.<rrb> (shen.<rrb> Parse_shen.<st_input1>)))
+           (IF (NOT (EQ (fail) Parse_shen.<rrb>))
+            (LET ((Parse_shen.<st_input2> (shen.<st_input2> Parse_shen.<rrb>)))
+             (IF (NOT (EQ (fail) Parse_shen.<st_input2>))
+              (shen.pair (CAR Parse_shen.<st_input2>)
+               (shen.package-macro
+                (macroexpand (shen.hdtl Parse_shen.<st_input1>))
+                (shen.hdtl Parse_shen.<st_input2>)))
+              (fail)))
+            (fail)))
+          (fail)))
+        (fail)))))
+    (IF (EQ Result (fail))
+     (LET
+      ((Result
+        (LET ((Parse_shen.<lcurly> (shen.<lcurly> V1357)))
+         (IF (NOT (EQ (fail) Parse_shen.<lcurly>))
+          (LET ((Parse_shen.<st_input> (shen.<st_input> Parse_shen.<lcurly>)))
+           (IF (NOT (EQ (fail) Parse_shen.<st_input>))
+            (shen.pair (CAR Parse_shen.<st_input>)
+             (CONS '{ (shen.hdtl Parse_shen.<st_input>)))
+            (fail)))
+          (fail)))))
+      (IF (EQ Result (fail))
+       (LET
+        ((Result
+          (LET ((Parse_shen.<rcurly> (shen.<rcurly> V1357)))
+           (IF (NOT (EQ (fail) Parse_shen.<rcurly>))
+            (LET
+             ((Parse_shen.<st_input> (shen.<st_input> Parse_shen.<rcurly>)))
+             (IF (NOT (EQ (fail) Parse_shen.<st_input>))
+              (shen.pair (CAR Parse_shen.<st_input>)
+               (CONS '} (shen.hdtl Parse_shen.<st_input>)))
+              (fail)))
+            (fail)))))
+        (IF (EQ Result (fail))
+         (LET
+          ((Result
+            (LET ((Parse_shen.<bar> (shen.<bar> V1357)))
+             (IF (NOT (EQ (fail) Parse_shen.<bar>))
+              (LET ((Parse_shen.<st_input> (shen.<st_input> Parse_shen.<bar>)))
+               (IF (NOT (EQ (fail) Parse_shen.<st_input>))
+                (shen.pair (CAR Parse_shen.<st_input>)
+                 (CONS 'bar! (shen.hdtl Parse_shen.<st_input>)))
+                (fail)))
+              (fail)))))
+          (IF (EQ Result (fail))
+           (LET
+            ((Result
+              (LET ((Parse_shen.<semicolon> (shen.<semicolon> V1357)))
+               (IF (NOT (EQ (fail) Parse_shen.<semicolon>))
+                (LET
+                 ((Parse_shen.<st_input>
+                   (shen.<st_input> Parse_shen.<semicolon>)))
+                 (IF (NOT (EQ (fail) Parse_shen.<st_input>))
+                  (shen.pair (CAR Parse_shen.<st_input>)
+                   (CONS '|;| (shen.hdtl Parse_shen.<st_input>)))
+                  (fail)))
+                (fail)))))
+            (IF (EQ Result (fail))
+             (LET
+              ((Result
+                (LET ((Parse_shen.<colon> (shen.<colon> V1357)))
+                 (IF (NOT (EQ (fail) Parse_shen.<colon>))
+                  (LET ((Parse_shen.<equal> (shen.<equal> Parse_shen.<colon>)))
+                   (IF (NOT (EQ (fail) Parse_shen.<equal>))
+                    (LET
+                     ((Parse_shen.<st_input>
+                       (shen.<st_input> Parse_shen.<equal>)))
+                     (IF (NOT (EQ (fail) Parse_shen.<st_input>))
+                      (shen.pair (CAR Parse_shen.<st_input>)
+                       (CONS '|:=| (shen.hdtl Parse_shen.<st_input>)))
+                      (fail)))
+                    (fail)))
+                  (fail)))))
+              (IF (EQ Result (fail))
+               (LET
+                ((Result
+                  (LET ((Parse_shen.<colon> (shen.<colon> V1357)))
+                   (IF (NOT (EQ (fail) Parse_shen.<colon>))
+                    (LET
+                     ((Parse_shen.<minus> (shen.<minus> Parse_shen.<colon>)))
+                     (IF (NOT (EQ (fail) Parse_shen.<minus>))
+                      (LET
+                       ((Parse_shen.<st_input>
+                         (shen.<st_input> Parse_shen.<minus>)))
+                       (IF (NOT (EQ (fail) Parse_shen.<st_input>))
+                        (shen.pair (CAR Parse_shen.<st_input>)
+                         (CONS '|:-| (shen.hdtl Parse_shen.<st_input>)))
+                        (fail)))
+                      (fail)))
+                    (fail)))))
+                (IF (EQ Result (fail))
+                 (LET
+                  ((Result
+                    (LET ((Parse_shen.<colon> (shen.<colon> V1357)))
+                     (IF (NOT (EQ (fail) Parse_shen.<colon>))
+                      (LET
+                       ((Parse_shen.<st_input>
+                         (shen.<st_input> Parse_shen.<colon>)))
+                       (IF (NOT (EQ (fail) Parse_shen.<st_input>))
+                        (shen.pair (CAR Parse_shen.<st_input>)
+                         (CONS '|:| (shen.hdtl Parse_shen.<st_input>)))
+                        (fail)))
+                      (fail)))))
+                  (IF (EQ Result (fail))
+                   (LET
+                    ((Result
+                      (LET ((Parse_shen.<comma> (shen.<comma> V1357)))
+                       (IF (NOT (EQ (fail) Parse_shen.<comma>))
+                        (LET
+                         ((Parse_shen.<st_input>
+                           (shen.<st_input> Parse_shen.<comma>)))
+                         (IF (NOT (EQ (fail) Parse_shen.<st_input>))
+                          (shen.pair (CAR Parse_shen.<st_input>)
+                           (CONS (intern ",")
+                            (shen.hdtl Parse_shen.<st_input>)))
+                          (fail)))
+                        (fail)))))
+                    (IF (EQ Result (fail))
+                     (LET
+                      ((Result
+                        (LET ((Parse_shen.<comment> (shen.<comment> V1357)))
+                         (IF (NOT (EQ (fail) Parse_shen.<comment>))
+                          (LET
+                           ((Parse_shen.<st_input>
+                             (shen.<st_input> Parse_shen.<comment>)))
+                           (IF (NOT (EQ (fail) Parse_shen.<st_input>))
+                            (shen.pair (CAR Parse_shen.<st_input>)
+                             (shen.hdtl Parse_shen.<st_input>))
+                            (fail)))
+                          (fail)))))
+                      (IF (EQ Result (fail))
+                       (LET
+                        ((Result
+                          (LET ((Parse_shen.<atom> (shen.<atom> V1357)))
+                           (IF (NOT (EQ (fail) Parse_shen.<atom>))
+                            (LET
+                             ((Parse_shen.<st_input>
+                               (shen.<st_input> Parse_shen.<atom>)))
+                             (IF (NOT (EQ (fail) Parse_shen.<st_input>))
+                              (shen.pair (CAR Parse_shen.<st_input>)
+                               (CONS
+                                (macroexpand (shen.hdtl Parse_shen.<atom>))
+                                (shen.hdtl Parse_shen.<st_input>)))
+                              (fail)))
+                            (fail)))))
+                        (IF (EQ Result (fail))
+                         (LET
+                          ((Result
+                            (LET
+                             ((Parse_shen.<whitespaces>
+                               (shen.<whitespaces> V1357)))
+                             (IF (NOT (EQ (fail) Parse_shen.<whitespaces>))
+                              (LET
+                               ((Parse_shen.<st_input>
+                                 (shen.<st_input> Parse_shen.<whitespaces>)))
+                               (IF (NOT (EQ (fail) Parse_shen.<st_input>))
+                                (shen.pair (CAR Parse_shen.<st_input>)
+                                 (shen.hdtl Parse_shen.<st_input>))
+                                (fail)))
+                              (fail)))))
+                          (IF (EQ Result (fail))
+                           (LET
+                            ((Result
+                              (LET ((Parse_<e> (<e> V1357)))
+                               (IF (NOT (EQ (fail) Parse_<e>))
+                                (shen.pair (CAR Parse_<e>) NIL) (fail)))))
+                            (IF (EQ Result (fail)) (fail) Result))
+                           Result))
+                         Result))
+                       Result))
+                     Result))
+                   Result))
+                 Result))
+               Result))
+             Result))
+           Result))
+         Result))
+       Result))
+     Result))
+   Result)))
+
+(DEFUN shen.<lsb> (V1362)
+ (LET
+  ((Result
+    (IF (AND (CONSP (CAR V1362)) (shen.ABSEQUAL 91 (CAR (CAR V1362))))
+     (shen.pair (CAR (shen.pair (CDR (CAR V1362)) (shen.hdtl V1362)))
+      'shen.skip)
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<rsb> (V1367)
+ (LET
+  ((Result
+    (IF (AND (CONSP (CAR V1367)) (shen.ABSEQUAL 93 (CAR (CAR V1367))))
+     (shen.pair (CAR (shen.pair (CDR (CAR V1367)) (shen.hdtl V1367)))
+      'shen.skip)
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<lcurly> (V1372)
+ (LET
+  ((Result
+    (IF (AND (CONSP (CAR V1372)) (shen.ABSEQUAL 123 (CAR (CAR V1372))))
+     (shen.pair (CAR (shen.pair (CDR (CAR V1372)) (shen.hdtl V1372)))
+      'shen.skip)
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<rcurly> (V1377)
+ (LET
+  ((Result
+    (IF (AND (CONSP (CAR V1377)) (shen.ABSEQUAL 125 (CAR (CAR V1377))))
+     (shen.pair (CAR (shen.pair (CDR (CAR V1377)) (shen.hdtl V1377)))
+      'shen.skip)
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<bar> (V1382)
+ (LET
+  ((Result
+    (IF (AND (CONSP (CAR V1382)) (shen.ABSEQUAL 124 (CAR (CAR V1382))))
+     (shen.pair (CAR (shen.pair (CDR (CAR V1382)) (shen.hdtl V1382)))
+      'shen.skip)
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<semicolon> (V1387)
+ (LET
+  ((Result
+    (IF (AND (CONSP (CAR V1387)) (shen.ABSEQUAL 59 (CAR (CAR V1387))))
+     (shen.pair (CAR (shen.pair (CDR (CAR V1387)) (shen.hdtl V1387)))
+      'shen.skip)
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<colon> (V1392)
+ (LET
+  ((Result
+    (IF (AND (CONSP (CAR V1392)) (shen.ABSEQUAL 58 (CAR (CAR V1392))))
+     (shen.pair (CAR (shen.pair (CDR (CAR V1392)) (shen.hdtl V1392)))
+      'shen.skip)
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<comma> (V1397)
+ (LET
+  ((Result
+    (IF (AND (CONSP (CAR V1397)) (shen.ABSEQUAL 44 (CAR (CAR V1397))))
+     (shen.pair (CAR (shen.pair (CDR (CAR V1397)) (shen.hdtl V1397)))
+      'shen.skip)
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<equal> (V1402)
+ (LET
+  ((Result
+    (IF (AND (CONSP (CAR V1402)) (shen.ABSEQUAL 61 (CAR (CAR V1402))))
+     (shen.pair (CAR (shen.pair (CDR (CAR V1402)) (shen.hdtl V1402)))
+      'shen.skip)
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<minus> (V1407)
+ (LET
+  ((Result
+    (IF (AND (CONSP (CAR V1407)) (shen.ABSEQUAL 45 (CAR (CAR V1407))))
+     (shen.pair (CAR (shen.pair (CDR (CAR V1407)) (shen.hdtl V1407)))
+      'shen.skip)
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<lrb> (V1412)
+ (LET
+  ((Result
+    (IF (AND (CONSP (CAR V1412)) (shen.ABSEQUAL 40 (CAR (CAR V1412))))
+     (shen.pair (CAR (shen.pair (CDR (CAR V1412)) (shen.hdtl V1412)))
+      'shen.skip)
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<rrb> (V1417)
+ (LET
+  ((Result
+    (IF (AND (CONSP (CAR V1417)) (shen.ABSEQUAL 41 (CAR (CAR V1417))))
+     (shen.pair (CAR (shen.pair (CDR (CAR V1417)) (shen.hdtl V1417)))
+      'shen.skip)
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<atom> (V1422)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<str> (shen.<str> V1422)))
+     (IF (NOT (EQ (fail) Parse_shen.<str>))
+      (shen.pair (CAR Parse_shen.<str>)
+       (shen.control-chars (shen.hdtl Parse_shen.<str>)))
+      (fail)))))
+  (IF (EQ Result (fail))
+   (LET
+    ((Result
+      (LET ((Parse_shen.<number> (shen.<number> V1422)))
+       (IF (NOT (EQ (fail) Parse_shen.<number>))
+        (shen.pair (CAR Parse_shen.<number>) (shen.hdtl Parse_shen.<number>))
+        (fail)))))
+    (IF (EQ Result (fail))
+     (LET
+      ((Result
+        (LET ((Parse_shen.<sym> (shen.<sym> V1422)))
+         (IF (NOT (EQ (fail) Parse_shen.<sym>))
+          (shen.pair (CAR Parse_shen.<sym>)
+           (IF (EQUAL (shen.hdtl Parse_shen.<sym>) "<>")
+            (CONS 'vector (CONS 0 NIL)) (intern (shen.hdtl Parse_shen.<sym>))))
+          (fail)))))
+      (IF (EQ Result (fail)) (fail) Result))
+     Result))
+   Result)))
+
+(DEFUN shen.control-chars (V1423)
+ (COND ((NULL V1423) "")
+  ((AND (CONSP V1423)
+    (AND (EQUAL "c" (CAR V1423))
+     (AND (CONSP (CDR V1423)) (EQUAL "#" (CAR (CDR V1423))))))
+   (LET ((CodePoint (shen.code-point (CDR (CDR V1423)))))
+    (LET ((AfterCodePoint (shen.after-codepoint (CDR (CDR V1423)))))
+     (@s (n->string (shen.decimalise CodePoint))
+      (shen.control-chars AfterCodePoint)))))
+  ((CONSP V1423) (@s (CAR V1423) (shen.control-chars (CDR V1423))))
+  (T (shen.sys-error 'shen.control-chars))))
+
+(DEFUN shen.code-point (V1426)
+ (COND ((AND (CONSP V1426) (EQUAL ";" (CAR V1426))) "")
+  ((AND (CONSP V1426)
+    (shen.wrapper
+     (element? (CAR V1426)
+      (CONS "0"
+       (CONS "1"
+        (CONS "2"
+         (CONS "3"
+          (CONS "4"
+           (CONS "5"
+            (CONS "6" (CONS "7" (CONS "8" (CONS "9" (CONS "0" NIL))))))))))))))
+   (CONS (CAR V1426) (shen.code-point (CDR V1426))))
+  (T
+   (simple-error
+    (cn "code point parse error "
+     (shen.app V1426
+      "
+"
+      'shen.a))))))
+
+(DEFUN shen.after-codepoint (V1431)
+ (COND ((NULL V1431) NIL)
+  ((AND (CONSP V1431) (EQUAL ";" (CAR V1431))) (CDR V1431))
+  ((CONSP V1431) (shen.after-codepoint (CDR V1431)))
+  (T (shen.sys-error 'shen.after-codepoint))))
+
+(DEFUN shen.decimalise (V1432)
+ (shen.pre (REVERSE (shen.digits->integers V1432)) 0))
+
+(DEFUN shen.digits->integers (V1437)
+ (COND
+  ((AND (CONSP V1437) (EQUAL "0" (CAR V1437)))
+   (CONS 0 (shen.digits->integers (CDR V1437))))
+  ((AND (CONSP V1437) (EQUAL "1" (CAR V1437)))
+   (CONS 1 (shen.digits->integers (CDR V1437))))
+  ((AND (CONSP V1437) (EQUAL "2" (CAR V1437)))
+   (CONS 2 (shen.digits->integers (CDR V1437))))
+  ((AND (CONSP V1437) (EQUAL "3" (CAR V1437)))
+   (CONS 3 (shen.digits->integers (CDR V1437))))
+  ((AND (CONSP V1437) (EQUAL "4" (CAR V1437)))
+   (CONS 4 (shen.digits->integers (CDR V1437))))
+  ((AND (CONSP V1437) (EQUAL "5" (CAR V1437)))
+   (CONS 5 (shen.digits->integers (CDR V1437))))
+  ((AND (CONSP V1437) (EQUAL "6" (CAR V1437)))
+   (CONS 6 (shen.digits->integers (CDR V1437))))
+  ((AND (CONSP V1437) (EQUAL "7" (CAR V1437)))
+   (CONS 7 (shen.digits->integers (CDR V1437))))
+  ((AND (CONSP V1437) (EQUAL "8" (CAR V1437)))
+   (CONS 8 (shen.digits->integers (CDR V1437))))
+  ((AND (CONSP V1437) (EQUAL "9" (CAR V1437)))
+   (CONS 9 (shen.digits->integers (CDR V1437))))
+  (T NIL)))
+
+(DEFUN shen.<sym> (V1442)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<alpha> (shen.<alpha> V1442)))
+     (IF (NOT (EQ (fail) Parse_shen.<alpha>))
+      (LET ((Parse_shen.<alphanums> (shen.<alphanums> Parse_shen.<alpha>)))
+       (IF (NOT (EQ (fail) Parse_shen.<alphanums>))
+        (shen.pair (CAR Parse_shen.<alphanums>)
+         (@s (shen.hdtl Parse_shen.<alpha>)
+          (shen.hdtl Parse_shen.<alphanums>)))
+        (fail)))
+      (fail)))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<alphanums> (V1447)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<alphanum> (shen.<alphanum> V1447)))
+     (IF (NOT (EQ (fail) Parse_shen.<alphanum>))
+      (LET ((Parse_shen.<alphanums> (shen.<alphanums> Parse_shen.<alphanum>)))
+       (IF (NOT (EQ (fail) Parse_shen.<alphanums>))
+        (shen.pair (CAR Parse_shen.<alphanums>)
+         (@s (shen.hdtl Parse_shen.<alphanum>)
+          (shen.hdtl Parse_shen.<alphanums>)))
+        (fail)))
+      (fail)))))
+  (IF (EQ Result (fail))
+   (LET
+    ((Result
+      (LET ((Parse_<e> (<e> V1447)))
+       (IF (NOT (EQ (fail) Parse_<e>)) (shen.pair (CAR Parse_<e>) "")
+        (fail)))))
+    (IF (EQ Result (fail)) (fail) Result))
+   Result)))
+
+(DEFUN shen.<alphanum> (V1452)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<alpha> (shen.<alpha> V1452)))
+     (IF (NOT (EQ (fail) Parse_shen.<alpha>))
+      (shen.pair (CAR Parse_shen.<alpha>) (shen.hdtl Parse_shen.<alpha>))
+      (fail)))))
+  (IF (EQ Result (fail))
+   (LET
+    ((Result
+      (LET ((Parse_shen.<num> (shen.<num> V1452)))
+       (IF (NOT (EQ (fail) Parse_shen.<num>))
+        (shen.pair (CAR Parse_shen.<num>) (shen.hdtl Parse_shen.<num>))
+        (fail)))))
+    (IF (EQ Result (fail)) (fail) Result))
+   Result)))
+
+(DEFUN shen.<num> (V1457)
+ (LET
+  ((Result
+    (IF (CONSP (CAR V1457))
+     (LET ((Parse_Byte (CAR (CAR V1457))))
+      (IF (shen.wrapper (shen.numbyte? Parse_Byte))
+       (shen.pair (CAR (shen.pair (CDR (CAR V1457)) (shen.hdtl V1457)))
+        (n->string Parse_Byte))
+       (fail)))
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.numbyte? (V1462)
+ (COND ((shen.ABSEQUAL 48 V1462) 'true) ((shen.ABSEQUAL 49 V1462) 'true)
+  ((shen.ABSEQUAL 50 V1462) 'true) ((shen.ABSEQUAL 51 V1462) 'true)
+  ((shen.ABSEQUAL 52 V1462) 'true) ((shen.ABSEQUAL 53 V1462) 'true)
+  ((shen.ABSEQUAL 54 V1462) 'true) ((shen.ABSEQUAL 55 V1462) 'true)
+  ((shen.ABSEQUAL 56 V1462) 'true) ((shen.ABSEQUAL 57 V1462) 'true)
+  (T 'false)))
+
+(DEFUN shen.<alpha> (V1467)
+ (LET
+  ((Result
+    (IF (CONSP (CAR V1467))
+     (LET ((Parse_Byte (CAR (CAR V1467))))
+      (IF (shen.wrapper (shen.symbol-code? Parse_Byte))
+       (shen.pair (CAR (shen.pair (CDR (CAR V1467)) (shen.hdtl V1467)))
+        (n->string Parse_Byte))
+       (fail)))
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.symbol-code? (V1468)
+ (or (shen.equal? V1468 126)
+  (or (and (shen.greater? V1468 94) (shen.less? V1468 123))
+   (or (and (shen.greater? V1468 59) (shen.less? V1468 91))
+    (or
+     (and (shen.greater? V1468 41)
+      (and (shen.less? V1468 58) (not (shen.equal? V1468 44))))
+     (or (and (shen.greater? V1468 34) (shen.less? V1468 40))
+      (shen.equal? V1468 33)))))))
+
+(DEFUN shen.<str> (V1473)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<dbq> (shen.<dbq> V1473)))
+     (IF (NOT (EQ (fail) Parse_shen.<dbq>))
+      (LET ((Parse_shen.<strcontents> (shen.<strcontents> Parse_shen.<dbq>)))
+       (IF (NOT (EQ (fail) Parse_shen.<strcontents>))
+        (LET ((Parse_shen.<dbq> (shen.<dbq> Parse_shen.<strcontents>)))
+         (IF (NOT (EQ (fail) Parse_shen.<dbq>))
+          (shen.pair (CAR Parse_shen.<dbq>)
+           (shen.hdtl Parse_shen.<strcontents>))
+          (fail)))
+        (fail)))
+      (fail)))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<dbq> (V1478)
+ (LET
+  ((Result
+    (IF (CONSP (CAR V1478))
+     (LET ((Parse_Byte (CAR (CAR V1478))))
+      (IF (shen.ABSEQUAL Parse_Byte 34)
+       (shen.pair (CAR (shen.pair (CDR (CAR V1478)) (shen.hdtl V1478)))
+        Parse_Byte)
+       (fail)))
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<strcontents> (V1483)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<strc> (shen.<strc> V1483)))
+     (IF (NOT (EQ (fail) Parse_shen.<strc>))
+      (LET ((Parse_shen.<strcontents> (shen.<strcontents> Parse_shen.<strc>)))
+       (IF (NOT (EQ (fail) Parse_shen.<strcontents>))
+        (shen.pair (CAR Parse_shen.<strcontents>)
+         (CONS (shen.hdtl Parse_shen.<strc>)
+          (shen.hdtl Parse_shen.<strcontents>)))
+        (fail)))
+      (fail)))))
+  (IF (EQ Result (fail))
+   (LET
+    ((Result
+      (LET ((Parse_<e> (<e> V1483)))
+       (IF (NOT (EQ (fail) Parse_<e>)) (shen.pair (CAR Parse_<e>) NIL)
+        (fail)))))
+    (IF (EQ Result (fail)) (fail) Result))
+   Result)))
+
+(DEFUN shen.<byte> (V1488)
+ (LET
+  ((Result
+    (IF (CONSP (CAR V1488))
+     (LET ((Parse_Byte (CAR (CAR V1488))))
+      (shen.pair (CAR (shen.pair (CDR (CAR V1488)) (shen.hdtl V1488)))
+       (n->string Parse_Byte)))
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<strc> (V1493)
+ (LET
+  ((Result
+    (IF (CONSP (CAR V1493))
+     (LET ((Parse_Byte (CAR (CAR V1493))))
+      (IF (NOT (shen.ABSEQUAL Parse_Byte 34))
+       (shen.pair (CAR (shen.pair (CDR (CAR V1493)) (shen.hdtl V1493)))
+        (n->string Parse_Byte))
+       (fail)))
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<number> (V1498)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<minus> (shen.<minus> V1498)))
+     (IF (NOT (EQ (fail) Parse_shen.<minus>))
+      (LET ((Parse_shen.<number> (shen.<number> Parse_shen.<minus>)))
+       (IF (NOT (EQ (fail) Parse_shen.<number>))
+        (shen.pair (CAR Parse_shen.<number>)
+         (shen.subtract 0 (shen.hdtl Parse_shen.<number>)))
+        (fail)))
+      (fail)))))
+  (IF (EQ Result (fail))
+   (LET
+    ((Result
+      (LET ((Parse_shen.<plus> (shen.<plus> V1498)))
+       (IF (NOT (EQ (fail) Parse_shen.<plus>))
+        (LET ((Parse_shen.<number> (shen.<number> Parse_shen.<plus>)))
+         (IF (NOT (EQ (fail) Parse_shen.<number>))
+          (shen.pair (CAR Parse_shen.<number>) (shen.hdtl Parse_shen.<number>))
+          (fail)))
+        (fail)))))
+    (IF (EQ Result (fail))
+     (LET
+      ((Result
+        (LET ((Parse_shen.<predigits> (shen.<predigits> V1498)))
+         (IF (NOT (EQ (fail) Parse_shen.<predigits>))
+          (LET ((Parse_shen.<stop> (shen.<stop> Parse_shen.<predigits>)))
+           (IF (NOT (EQ (fail) Parse_shen.<stop>))
+            (LET
+             ((Parse_shen.<postdigits> (shen.<postdigits> Parse_shen.<stop>)))
+             (IF (NOT (EQ (fail) Parse_shen.<postdigits>))
+              (LET ((Parse_shen.<E> (shen.<E> Parse_shen.<postdigits>)))
+               (IF (NOT (EQ (fail) Parse_shen.<E>))
+                (LET ((Parse_shen.<log10> (shen.<log10> Parse_shen.<E>)))
+                 (IF (NOT (EQ (fail) Parse_shen.<log10>))
+                  (shen.pair (CAR Parse_shen.<log10>)
+                   (shen.multiply (shen.expt 10 (shen.hdtl Parse_shen.<log10>))
+                    (shen.add
+                     (shen.pre (REVERSE (shen.hdtl Parse_shen.<predigits>)) 0)
+                     (shen.post (shen.hdtl Parse_shen.<postdigits>) 1))))
+                  (fail)))
+                (fail)))
+              (fail)))
+            (fail)))
+          (fail)))))
+      (IF (EQ Result (fail))
+       (LET
+        ((Result
+          (LET ((Parse_shen.<digits> (shen.<digits> V1498)))
+           (IF (NOT (EQ (fail) Parse_shen.<digits>))
+            (LET ((Parse_shen.<E> (shen.<E> Parse_shen.<digits>)))
+             (IF (NOT (EQ (fail) Parse_shen.<E>))
+              (LET ((Parse_shen.<log10> (shen.<log10> Parse_shen.<E>)))
+               (IF (NOT (EQ (fail) Parse_shen.<log10>))
+                (shen.pair (CAR Parse_shen.<log10>)
+                 (shen.multiply (shen.expt 10 (shen.hdtl Parse_shen.<log10>))
+                  (shen.pre (REVERSE (shen.hdtl Parse_shen.<digits>)) 0)))
+                (fail)))
+              (fail)))
+            (fail)))))
+        (IF (EQ Result (fail))
+         (LET
+          ((Result
+            (LET ((Parse_shen.<predigits> (shen.<predigits> V1498)))
+             (IF (NOT (EQ (fail) Parse_shen.<predigits>))
+              (LET ((Parse_shen.<stop> (shen.<stop> Parse_shen.<predigits>)))
+               (IF (NOT (EQ (fail) Parse_shen.<stop>))
+                (LET
+                 ((Parse_shen.<postdigits>
+                   (shen.<postdigits> Parse_shen.<stop>)))
+                 (IF (NOT (EQ (fail) Parse_shen.<postdigits>))
+                  (shen.pair (CAR Parse_shen.<postdigits>)
+                   (shen.add
+                    (shen.pre (REVERSE (shen.hdtl Parse_shen.<predigits>)) 0)
+                    (shen.post (shen.hdtl Parse_shen.<postdigits>) 1)))
+                  (fail)))
+                (fail)))
+              (fail)))))
+          (IF (EQ Result (fail))
+           (LET
+            ((Result
+              (LET ((Parse_shen.<digits> (shen.<digits> V1498)))
+               (IF (NOT (EQ (fail) Parse_shen.<digits>))
+                (shen.pair (CAR Parse_shen.<digits>)
+                 (shen.pre (REVERSE (shen.hdtl Parse_shen.<digits>)) 0))
+                (fail)))))
+            (IF (EQ Result (fail)) (fail) Result))
+           Result))
+         Result))
+       Result))
+     Result))
+   Result)))
+
+(DEFUN shen.<E> (V1503)
+ (LET
+  ((Result
+    (IF (AND (CONSP (CAR V1503)) (shen.ABSEQUAL 101 (CAR (CAR V1503))))
+     (shen.pair (CAR (shen.pair (CDR (CAR V1503)) (shen.hdtl V1503)))
+      'shen.skip)
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<log10> (V1508)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<minus> (shen.<minus> V1508)))
+     (IF (NOT (EQ (fail) Parse_shen.<minus>))
+      (LET ((Parse_shen.<digits> (shen.<digits> Parse_shen.<minus>)))
+       (IF (NOT (EQ (fail) Parse_shen.<digits>))
+        (shen.pair (CAR Parse_shen.<digits>)
+         (shen.subtract 0
+          (shen.pre (REVERSE (shen.hdtl Parse_shen.<digits>)) 0)))
+        (fail)))
+      (fail)))))
+  (IF (EQ Result (fail))
+   (LET
+    ((Result
+      (LET ((Parse_shen.<digits> (shen.<digits> V1508)))
+       (IF (NOT (EQ (fail) Parse_shen.<digits>))
+        (shen.pair (CAR Parse_shen.<digits>)
+         (shen.pre (REVERSE (shen.hdtl Parse_shen.<digits>)) 0))
+        (fail)))))
+    (IF (EQ Result (fail)) (fail) Result))
+   Result)))
+
+(DEFUN shen.<plus> (V1513)
+ (LET
+  ((Result
+    (IF (CONSP (CAR V1513))
+     (LET ((Parse_Byte (CAR (CAR V1513))))
+      (IF (shen.ABSEQUAL Parse_Byte 43)
+       (shen.pair (CAR (shen.pair (CDR (CAR V1513)) (shen.hdtl V1513)))
+        Parse_Byte)
+       (fail)))
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<stop> (V1518)
+ (LET
+  ((Result
+    (IF (CONSP (CAR V1518))
+     (LET ((Parse_Byte (CAR (CAR V1518))))
+      (IF (shen.ABSEQUAL Parse_Byte 46)
+       (shen.pair (CAR (shen.pair (CDR (CAR V1518)) (shen.hdtl V1518)))
+        Parse_Byte)
+       (fail)))
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<predigits> (V1523)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<digits> (shen.<digits> V1523)))
+     (IF (NOT (EQ (fail) Parse_shen.<digits>))
+      (shen.pair (CAR Parse_shen.<digits>) (shen.hdtl Parse_shen.<digits>))
+      (fail)))))
+  (IF (EQ Result (fail))
+   (LET
+    ((Result
+      (LET ((Parse_<e> (<e> V1523)))
+       (IF (NOT (EQ (fail) Parse_<e>)) (shen.pair (CAR Parse_<e>) NIL)
+        (fail)))))
+    (IF (EQ Result (fail)) (fail) Result))
+   Result)))
+
+(DEFUN shen.<postdigits> (V1528)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<digits> (shen.<digits> V1528)))
+     (IF (NOT (EQ (fail) Parse_shen.<digits>))
+      (shen.pair (CAR Parse_shen.<digits>) (shen.hdtl Parse_shen.<digits>))
+      (fail)))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<digits> (V1533)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<digit> (shen.<digit> V1533)))
+     (IF (NOT (EQ (fail) Parse_shen.<digit>))
+      (LET ((Parse_shen.<digits> (shen.<digits> Parse_shen.<digit>)))
+       (IF (NOT (EQ (fail) Parse_shen.<digits>))
+        (shen.pair (CAR Parse_shen.<digits>)
+         (CONS (shen.hdtl Parse_shen.<digit>) (shen.hdtl Parse_shen.<digits>)))
+        (fail)))
+      (fail)))))
+  (IF (EQ Result (fail))
+   (LET
+    ((Result
+      (LET ((Parse_shen.<digit> (shen.<digit> V1533)))
+       (IF (NOT (EQ (fail) Parse_shen.<digit>))
+        (shen.pair (CAR Parse_shen.<digit>)
+         (CONS (shen.hdtl Parse_shen.<digit>) NIL))
+        (fail)))))
+    (IF (EQ Result (fail)) (fail) Result))
+   Result)))
+
+(DEFUN shen.<digit> (V1538)
+ (LET
+  ((Result
+    (IF (CONSP (CAR V1538))
+     (LET ((Parse_X (CAR (CAR V1538))))
+      (IF (shen.wrapper (shen.numbyte? Parse_X))
+       (shen.pair (CAR (shen.pair (CDR (CAR V1538)) (shen.hdtl V1538)))
+        (shen.byte->digit Parse_X))
+       (fail)))
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.byte->digit (V1539)
+ (COND ((shen.ABSEQUAL 48 V1539) 0) ((shen.ABSEQUAL 49 V1539) 1)
+  ((shen.ABSEQUAL 50 V1539) 2) ((shen.ABSEQUAL 51 V1539) 3)
+  ((shen.ABSEQUAL 52 V1539) 4) ((shen.ABSEQUAL 53 V1539) 5)
+  ((shen.ABSEQUAL 54 V1539) 6) ((shen.ABSEQUAL 55 V1539) 7)
+  ((shen.ABSEQUAL 56 V1539) 8) ((shen.ABSEQUAL 57 V1539) 9)
+  (T (shen.sys-error 'shen.byte->digit))))
+
+(DEFUN shen.pre (V1542 V1543)
+ (COND ((NULL V1542) 0)
+  ((CONSP V1542)
+   (shen.add (shen.multiply (shen.expt 10 V1543) (CAR V1542))
+    (shen.pre (CDR V1542) (1+ V1543))))
+  (T (shen.sys-error 'shen.pre))))
+
+(DEFUN shen.post (V1546 V1547)
+ (COND ((NULL V1546) 0)
+  ((CONSP V1546)
+   (shen.add (shen.multiply (shen.expt 10 (shen.subtract 0 V1547)) (CAR V1546))
+    (shen.post (CDR V1546) (1+ V1547))))
+  (T (shen.sys-error 'shen.post))))
+
+(DEFUN shen.expt (V1550 V1551)
+ (COND ((shen.ABSEQUAL 0 V1551) 1)
+  ((> V1551 0) (shen.multiply V1550 (shen.expt V1550 (1- V1551))))
+  (T (shen.multiply 1 (shen.divide (shen.expt V1550 (1+ V1551)) V1550)))))
+
+(DEFUN shen.<st_input1> (V1556)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<st_input> (shen.<st_input> V1556)))
+     (IF (NOT (EQ (fail) Parse_shen.<st_input>))
+      (shen.pair (CAR Parse_shen.<st_input>) (shen.hdtl Parse_shen.<st_input>))
+      (fail)))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<st_input2> (V1561)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<st_input> (shen.<st_input> V1561)))
+     (IF (NOT (EQ (fail) Parse_shen.<st_input>))
+      (shen.pair (CAR Parse_shen.<st_input>) (shen.hdtl Parse_shen.<st_input>))
+      (fail)))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<comment> (V1566)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<singleline> (shen.<singleline> V1566)))
+     (IF (NOT (EQ (fail) Parse_shen.<singleline>))
+      (shen.pair (CAR Parse_shen.<singleline>) 'shen.skip) (fail)))))
+  (IF (EQ Result (fail))
+   (LET
+    ((Result
+      (LET ((Parse_shen.<multiline> (shen.<multiline> V1566)))
+       (IF (NOT (EQ (fail) Parse_shen.<multiline>))
+        (shen.pair (CAR Parse_shen.<multiline>) 'shen.skip) (fail)))))
+    (IF (EQ Result (fail)) (fail) Result))
+   Result)))
+
+(DEFUN shen.<singleline> (V1571)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<backslash> (shen.<backslash> V1571)))
+     (IF (NOT (EQ (fail) Parse_shen.<backslash>))
+      (LET ((Parse_shen.<backslash> (shen.<backslash> Parse_shen.<backslash>)))
+       (IF (NOT (EQ (fail) Parse_shen.<backslash>))
+        (LET
+         ((Parse_shen.<anysingle> (shen.<anysingle> Parse_shen.<backslash>)))
+         (IF (NOT (EQ (fail) Parse_shen.<anysingle>))
+          (LET ((Parse_shen.<return> (shen.<return> Parse_shen.<anysingle>)))
+           (IF (NOT (EQ (fail) Parse_shen.<return>))
+            (shen.pair (CAR Parse_shen.<return>) 'shen.skip) (fail)))
+          (fail)))
+        (fail)))
+      (fail)))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<backslash> (V1576)
+ (LET
+  ((Result
+    (IF (AND (CONSP (CAR V1576)) (shen.ABSEQUAL 92 (CAR (CAR V1576))))
+     (shen.pair (CAR (shen.pair (CDR (CAR V1576)) (shen.hdtl V1576)))
+      'shen.skip)
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<anysingle> (V1581)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<non-return> (shen.<non-return> V1581)))
+     (IF (NOT (EQ (fail) Parse_shen.<non-return>))
+      (LET
+       ((Parse_shen.<anysingle> (shen.<anysingle> Parse_shen.<non-return>)))
+       (IF (NOT (EQ (fail) Parse_shen.<anysingle>))
+        (shen.pair (CAR Parse_shen.<anysingle>) 'shen.skip) (fail)))
+      (fail)))))
+  (IF (EQ Result (fail))
+   (LET
+    ((Result
+      (LET ((Parse_<e> (<e> V1581)))
+       (IF (NOT (EQ (fail) Parse_<e>)) (shen.pair (CAR Parse_<e>) 'shen.skip)
+        (fail)))))
+    (IF (EQ Result (fail)) (fail) Result))
+   Result)))
+
+(DEFUN shen.<non-return> (V1586)
+ (LET
+  ((Result
+    (IF (CONSP (CAR V1586))
+     (LET ((Parse_X (CAR (CAR V1586))))
+      (IF (NOT (shen.wrapper (element? Parse_X (CONS 10 (CONS 13 NIL)))))
+       (shen.pair (CAR (shen.pair (CDR (CAR V1586)) (shen.hdtl V1586)))
+        'shen.skip)
+       (fail)))
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<return> (V1591)
+ (LET
+  ((Result
+    (IF (CONSP (CAR V1591))
+     (LET ((Parse_X (CAR (CAR V1591))))
+      (IF (shen.wrapper (element? Parse_X (CONS 10 (CONS 13 NIL))))
+       (shen.pair (CAR (shen.pair (CDR (CAR V1591)) (shen.hdtl V1591)))
+        'shen.skip)
+       (fail)))
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<multiline> (V1596)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<backslash> (shen.<backslash> V1596)))
+     (IF (NOT (EQ (fail) Parse_shen.<backslash>))
+      (LET ((Parse_shen.<times> (shen.<times> Parse_shen.<backslash>)))
+       (IF (NOT (EQ (fail) Parse_shen.<times>))
+        (LET ((Parse_shen.<anymulti> (shen.<anymulti> Parse_shen.<times>)))
+         (IF (NOT (EQ (fail) Parse_shen.<anymulti>))
+          (shen.pair (CAR Parse_shen.<anymulti>) 'shen.skip) (fail)))
+        (fail)))
+      (fail)))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<times> (V1601)
+ (LET
+  ((Result
+    (IF (AND (CONSP (CAR V1601)) (shen.ABSEQUAL 42 (CAR (CAR V1601))))
+     (shen.pair (CAR (shen.pair (CDR (CAR V1601)) (shen.hdtl V1601)))
+      'shen.skip)
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.<anymulti> (V1606)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<comment> (shen.<comment> V1606)))
+     (IF (NOT (EQ (fail) Parse_shen.<comment>))
+      (LET ((Parse_shen.<anymulti> (shen.<anymulti> Parse_shen.<comment>)))
+       (IF (NOT (EQ (fail) Parse_shen.<anymulti>))
+        (shen.pair (CAR Parse_shen.<anymulti>) 'shen.skip) (fail)))
+      (fail)))))
+  (IF (EQ Result (fail))
+   (LET
+    ((Result
+      (LET ((Parse_shen.<times> (shen.<times> V1606)))
+       (IF (NOT (EQ (fail) Parse_shen.<times>))
+        (LET ((Parse_shen.<backslash> (shen.<backslash> Parse_shen.<times>)))
+         (IF (NOT (EQ (fail) Parse_shen.<backslash>))
+          (shen.pair (CAR Parse_shen.<backslash>) 'shen.skip) (fail)))
+        (fail)))))
+    (IF (EQ Result (fail))
+     (LET
+      ((Result
+        (IF (CONSP (CAR V1606))
+         (LET ((Parse_X (CAR (CAR V1606))))
+          (LET
+           ((Parse_shen.<anymulti>
+             (shen.<anymulti>
+              (shen.pair (CDR (CAR V1606)) (shen.hdtl V1606)))))
+           (IF (NOT (EQ (fail) Parse_shen.<anymulti>))
+            (shen.pair (CAR Parse_shen.<anymulti>) 'shen.skip) (fail))))
+         (fail))))
+      (IF (EQ Result (fail)) (fail) Result))
+     Result))
+   Result)))
+
+(DEFUN shen.<whitespaces> (V1611)
+ (LET
+  ((Result
+    (LET ((Parse_shen.<whitespace> (shen.<whitespace> V1611)))
+     (IF (NOT (EQ (fail) Parse_shen.<whitespace>))
+      (LET
+       ((Parse_shen.<whitespaces>
+         (shen.<whitespaces> Parse_shen.<whitespace>)))
+       (IF (NOT (EQ (fail) Parse_shen.<whitespaces>))
+        (shen.pair (CAR Parse_shen.<whitespaces>) 'shen.skip) (fail)))
+      (fail)))))
+  (IF (EQ Result (fail))
+   (LET
+    ((Result
+      (LET ((Parse_shen.<whitespace> (shen.<whitespace> V1611)))
+       (IF (NOT (EQ (fail) Parse_shen.<whitespace>))
+        (shen.pair (CAR Parse_shen.<whitespace>) 'shen.skip) (fail)))))
+    (IF (EQ Result (fail)) (fail) Result))
+   Result)))
+
+(DEFUN shen.<whitespace> (V1616)
+ (LET
+  ((Result
+    (IF (CONSP (CAR V1616))
+     (LET ((Parse_X (CAR (CAR V1616))))
+      (IF
+       (shen.wrapper
+        (LET ((Parse_Case Parse_X))
+         (or (shen.equal? Parse_Case 32)
+          (or (shen.equal? Parse_Case 13)
+           (or (shen.equal? Parse_Case 10) (shen.equal? Parse_Case 9))))))
+       (shen.pair (CAR (shen.pair (CDR (CAR V1616)) (shen.hdtl V1616)))
+        'shen.skip)
+       (fail)))
+     (fail))))
+  (IF (EQ Result (fail)) (fail) Result)))
+
+(DEFUN shen.cons_form (V1617)
+ (COND ((NULL V1617) NIL)
+  ((AND (CONSP V1617)
+    (AND (CONSP (CDR V1617))
+     (AND (CONSP (CDR (CDR V1617)))
+      (AND (NULL (CDR (CDR (CDR V1617))))
+       (shen.ABSEQUAL (CAR (CDR V1617)) 'bar!)))))
+   (CONS 'cons (CONS (CAR V1617) (CDR (CDR V1617)))))
+  ((CONSP V1617)
+   (CONS 'cons (CONS (CAR V1617) (CONS (shen.cons_form (CDR V1617)) NIL))))
+  (T (shen.sys-error 'shen.cons_form))))
+
+(DEFUN shen.package-macro (V1620 V1621)
+ (COND
+  ((AND (CONSP V1620)
+    (AND (EQ '$ (CAR V1620))
+     (AND (CONSP (CDR V1620)) (NULL (CDR (CDR V1620))))))
+   (APPEND (explode (CAR (CDR V1620))) V1621))
+  ((AND (CONSP V1620)
+    (AND (EQ 'package (CAR V1620))
+     (AND (CONSP (CDR V1620))
+      (AND (EQ 'null (CAR (CDR V1620))) (CONSP (CDR (CDR V1620)))))))
+   (APPEND (CDR (CDR (CDR V1620))) V1621))
+  ((AND (CONSP V1620)
+    (AND (EQ 'package (CAR V1620))
+     (AND (CONSP (CDR V1620)) (CONSP (CDR (CDR V1620))))))
+   (LET ((ListofExceptions (shen.eval-without-macros (CAR (CDR (CDR V1620))))))
+    (LET ((Record (shen.record-exceptions ListofExceptions (CAR (CDR V1620)))))
+     (LET ((PackageNameDot (intern (cn (str (CAR (CDR V1620))) "."))))
+      (APPEND
+       (shen.packageh PackageNameDot ListofExceptions (CDR (CDR (CDR V1620))))
+       V1621)))))
+  (T (CONS V1620 V1621))))
+
+(DEFUN shen.record-exceptions (V1622 V1623)
+ (LET
+  ((CurrExceptions
+    (trap-error (get V1623 'shen.external-symbols *property-vector*)
+     #'(LAMBDA (E) NIL))))
+  (LET ((AllExceptions (union V1622 CurrExceptions)))
+   (put V1623 'shen.external-symbols AllExceptions *property-vector*))))
+
+(DEFUN shen.packageh (V1632 V1633 V1634)
+ (COND
+  ((CONSP V1634)
+   (CONS (shen.packageh V1632 V1633 (CAR V1634))
+    (shen.packageh V1632 V1633 (CDR V1634))))
+  ((OR (shen.wrapper (shen.sysfunc? V1634))
+    (OR (shen.wrapper (variable? V1634))
+     (OR (shen.wrapper (element? V1634 V1633))
+      (OR (shen.wrapper (shen.doubleunderline? V1634))
+       (shen.wrapper (shen.singleunderline? V1634))))))
+   V1634)
+  ((AND (shen.wrapper (symbol? V1634))
+    (NOT
+     (shen.wrapper
+      (shen.prefix? (CONS "s" (CONS "h" (CONS "e" (CONS "n" (CONS "." NIL)))))
+       (explode V1634)))))
+   (concat V1632 V1634))
+  (T V1634)))
+

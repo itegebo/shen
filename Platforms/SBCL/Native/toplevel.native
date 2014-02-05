@@ -1,0 +1,415 @@
+
+"**********************************************************************************
+*                           The License						                                      *
+* 										                                                                  *
+* The user is free to produce commercial applications with the software, to 	          *
+* distribute these applications in source or binary  form, and to charge monies         *
+* for them as he sees fit and in concordance with the laws of the land subject 	        *
+* to the following license.							                                                *
+*										                                                                    * 
+* 1. The license applies to all the software and all derived software and 	            *
+*    must appear on such.							                                                  *
+*										                                                                    *
+* 2. It is illegal to distribute the software without this license attached	            *
+*    to it and use of the software implies agreement with the license as such.          *
+*    It is illegal for anyone who is not the copyright holder to tamper with 	          *
+*    or change the license.							                                                *
+*										                                                                    *
+* 3. Neither the names of Lambda Associates or the copyright holder may be used         *
+*    to endorse or promote products built using the software without specific 	        *
+*    prior written permission from the copyright holder.		                            *
+*										                                                                    *
+* 4. That possession of this license does not confer on the copyright holder 	          *
+*    any special contractual obligation towards the user. That in no event 	            * 
+*    shall the copyright holder be liable for any direct, indirect, incidental,        *   
+*    special, exemplary or consequential damages (including but not limited             *
+*    to procurement of substitute goods or services, loss of use, data, 	              * 
+*    interruption), however caused and on any theory of liability, whether in	          * 
+*    contract, strict liability or tort (including negligence) arising in any         	*
+*    way out of the use of the software, even if advised of the possibility of         	*
+*    such damage.						                                                        		* 
+*										                                                                    *
+* 5. It is permitted for the user to change the software, for the purpose of 	          *
+*    improving performance, correcting an error, or porting to a new platform, 	        *
+*    and distribute the derived version of Shen provided the resulting program 	        *
+*    conforms in all respects to the Shen standard and is issued under that             * 
+*    title. The user must make it clear with his distribution that he/she is 	          *
+*    the author of the changes and what these changes are and why. 		                  *
+*										                                                                    *
+* 6. Derived versions of this software in whatever form are subject to the same         *
+*    restrictions. In particular it is not permitted to make derived copies of          *
+*    this software which do not conform to the Shen standard or appear under a          *
+*    different title.								                                                    *
+*										                                                                    *
+*    It is permitted to distribute versions of Shen which incorporate libraries,        *
+*    graphics or other facilities which are not part of the Shen standard.	            *
+*										                                                                    *
+* For an explication of this license see www.shenlanguage.org/license.htm which         *
+* explains this license in full.                                                        *
+*				 						                                                                    *
+*****************************************************************************************
+"
+
+(DEFUN shen.shen () (do (shen.credits) (shen.loop)))
+
+(DEFUN shen.loop ()
+  (do (shen.initialise_environment)
+   (do (shen.prompt)
+    (do
+     (trap-error (shen.read-evaluate-print)
+                 #'(LAMBDA (E) (pr (error-to-string E) (stoutput))))
+     (shen.loop)))))
+
+(DEFUN shen.credits ()
+  (do
+   (shen.prhush "
+Shen 2010, copyright (C) 2010 Mark Tarver
+"
+    (stoutput))
+   (do
+    (shen.prhush "released under the Shen license
+"
+     (stoutput))
+    (do
+     (shen.prhush
+      (cn "www.shenlanguage.org, "
+          (shen.app *version* "
+"
+           'shen.a))
+      (stoutput))
+     (do
+      (shen.prhush
+       (cn "running under "
+           (shen.app *language*
+            (cn ", implementation: " (shen.app *implementation* "" 'shen.a))
+            'shen.a))
+       (stoutput))
+      (shen.prhush
+       (cn "
+port "
+           (shen.app *port*
+            (cn " ported by "
+                (shen.app *porters* "
+"
+                 'shen.a))
+            'shen.a))
+       (stoutput)))))))
+
+(DEFUN shen.initialise_environment ()
+  (shen.multiple-set
+   (CONS 'shen.*call*
+         (CONS 0
+               (CONS 'shen.*infs*
+                     (CONS 0
+                           (CONS 'shen.*process-counter*
+                                 (CONS 0
+                                       (CONS 'shen.*catch* (CONS 0 NIL))))))))))
+
+(DEFUN shen.multiple-set (V2316)
+  (COND ((NULL V2316) NIL)
+        ((AND (CONSP V2316) (CONSP (CDR V2316)))
+         (do (set (CAR V2316) (CAR (CDR V2316)))
+          (shen.multiple-set (CDR (CDR V2316)))))
+        (T (shen.sys-error 'shen.multiple-set))))
+
+(DEFUN destroy (V2317) (declare V2317 'symbol))
+
+(set 'shen.*history* NIL)
+
+(DEFUN shen.read-evaluate-print ()
+  (LET ((Lineread (shen.toplineread)))
+    (LET ((History shen.*history*))
+      (LET ((NewLineread
+             (shen.retrieve-from-history-if-needed Lineread History)))
+        (LET ((NewHistory (shen.update_history NewLineread History)))
+          (LET ((Parsed (fst NewLineread)))
+            (shen.toplevel Parsed)))))))
+
+(DEFUN shen.retrieve-from-history-if-needed (V2327 V2328)
+  (COND
+   ((AND
+     (AND (ARRAYP V2327) (NOT (STRINGP V2327)) (EQ (AREF V2327 0) 'shen.tuple))
+     (AND (CONSP (snd V2327))
+          (shen.wrapper
+           (element? (CAR (snd V2327))
+            (CONS (shen.space) (CONS (shen.newline) NIL))))))
+    (shen.retrieve-from-history-if-needed (@p (fst V2327) (CDR (snd V2327)))
+     V2328))
+   ((AND
+     (AND (ARRAYP V2327) (NOT (STRINGP V2327)) (EQ (AREF V2327 0) 'shen.tuple))
+     (AND (CONSP (snd V2327))
+          (AND (CONSP (CDR (snd V2327)))
+               (AND (NULL (CDR (CDR (snd V2327))))
+                    (AND (CONSP V2328)
+                         (AND
+                          (shen.ABSEQUAL (CAR (snd V2327)) (shen.exclamation))
+                          (shen.ABSEQUAL (CAR (CDR (snd V2327)))
+                                         (shen.exclamation))))))))
+    (LET ((PastPrint (shen.prbytes (snd (CAR V2328)))))
+      (CAR V2328)))
+   ((AND
+     (AND (ARRAYP V2327) (NOT (STRINGP V2327)) (EQ (AREF V2327 0) 'shen.tuple))
+     (AND (CONSP (snd V2327))
+          (shen.ABSEQUAL (CAR (snd V2327)) (shen.exclamation))))
+    (LET ((Key? (shen.make-key (CDR (snd V2327)) V2328)))
+      (LET ((Find (head (shen.find-past-inputs Key? V2328))))
+        (LET ((PastPrint (shen.prbytes (snd Find))))
+          Find))))
+   ((AND
+     (AND (ARRAYP V2327) (NOT (STRINGP V2327)) (EQ (AREF V2327 0) 'shen.tuple))
+     (AND (CONSP (snd V2327))
+          (AND (NULL (CDR (snd V2327)))
+               (shen.ABSEQUAL (CAR (snd V2327)) (shen.percent)))))
+    (do (shen.print-past-inputs #'(LAMBDA (X) 'true) (REVERSE V2328) 0)
+     (abort)))
+   ((AND
+     (AND (ARRAYP V2327) (NOT (STRINGP V2327)) (EQ (AREF V2327 0) 'shen.tuple))
+     (AND (CONSP (snd V2327))
+          (shen.ABSEQUAL (CAR (snd V2327)) (shen.percent))))
+    (LET ((Key? (shen.make-key (CDR (snd V2327)) V2328)))
+      (LET ((Pastprint (shen.print-past-inputs Key? (REVERSE V2328) 0)))
+        (abort))))
+   (T V2327)))
+
+(DEFUN shen.percent () 37)
+
+(DEFUN shen.exclamation () 33)
+
+(DEFUN shen.prbytes (V2329)
+  (do (map #'(LAMBDA (Byte) (pr (n->string Byte) (stoutput))) V2329) (nl 1)))
+
+(DEFUN shen.update_history (V2330 V2331)
+  (set 'shen.*history* (CONS V2330 V2331)))
+
+(DEFUN shen.toplineread () (shen.toplineread_loop (read-byte (stinput)) NIL))
+
+(DEFUN shen.toplineread_loop (V2333 V2334)
+  (COND ((shen.ABSEQUAL V2333 (shen.hat)) (simple-error "line read aborted"))
+        ((shen.wrapper
+          (element? V2333
+           (CONS (shen.newline) (CONS (shen.carriage-return) NIL))))
+         (LET ((Line
+                (compile 'shen.<st_input> V2334 #'(LAMBDA (E) 'shen.nextline))))
+           (IF (OR (EQ Line 'shen.nextline) (NULL Line))
+               (shen.toplineread_loop (read-byte (stinput))
+                (APPEND V2334 (CONS V2333 NIL)))
+               (@p Line V2334))))
+        (T
+         (shen.toplineread_loop (read-byte (stinput))
+          (APPEND V2334 (CONS V2333 NIL))))))
+
+(DEFUN shen.hat () 94)
+
+(DEFUN shen.newline () 10)
+
+(DEFUN shen.carriage-return () 13)
+
+(DEFUN tc (V2339)
+  (COND ((EQ '+ V2339) (set 'shen.*tc* 'true))
+        ((EQ '- V2339) (set 'shen.*tc* 'false))
+        (T (simple-error "tc expects a + or -"))))
+
+(DEFUN shen.prompt ()
+  (IF (shen.wrapper shen.*tc*)
+      (shen.prhush
+       (cn "
+
+("
+           (shen.app (length shen.*history*) "+) " 'shen.a))
+       (stoutput))
+      (shen.prhush
+       (cn "
+
+("
+           (shen.app (length shen.*history*) "-) " 'shen.a))
+       (stoutput))))
+
+(DEFUN shen.toplevel (V2340) (shen.toplevel_evaluate V2340 shen.*tc*))
+
+(DEFUN shen.find-past-inputs (V2341 V2342)
+  (LET ((F (shen.find V2341 V2342)))
+    (IF (NULL F)
+        (simple-error "input not found
+")
+        F)))
+
+(DEFUN shen.make-key (V2343 V2344)
+  (LET ((Atom
+         (CAR
+          (compile 'shen.<st_input> V2343
+           #'(LAMBDA (E)
+               (IF (CONSP E)
+                   (simple-error
+                    (cn "parse error here: "
+                        (shen.app E "
+"
+                         'shen.s)))
+                   (simple-error "parse error
+")))))))
+    (IF (shen.wrapper (integer? Atom))
+        #'(LAMBDA (X) (shen.equal? X (nth (1+ Atom) (REVERSE V2344))))
+        #'(LAMBDA (X) (shen.prefix? V2343 (shen.trim-gubbins (snd X)))))))
+
+(DEFUN shen.trim-gubbins (V2345)
+  (COND
+   ((AND (CONSP V2345) (shen.ABSEQUAL (CAR V2345) (shen.space)))
+    (shen.trim-gubbins (CDR V2345)))
+   ((AND (CONSP V2345) (shen.ABSEQUAL (CAR V2345) (shen.newline)))
+    (shen.trim-gubbins (CDR V2345)))
+   ((AND (CONSP V2345) (shen.ABSEQUAL (CAR V2345) (shen.carriage-return)))
+    (shen.trim-gubbins (CDR V2345)))
+   ((AND (CONSP V2345) (shen.ABSEQUAL (CAR V2345) (shen.tab)))
+    (shen.trim-gubbins (CDR V2345)))
+   ((AND (CONSP V2345) (shen.ABSEQUAL (CAR V2345) (shen.left-round)))
+    (shen.trim-gubbins (CDR V2345)))
+   (T V2345)))
+
+(DEFUN shen.space () 32)
+
+(DEFUN shen.tab () 9)
+
+(DEFUN shen.left-round () 40)
+
+(DEFUN shen.find (V2352 V2353)
+  (COND ((NULL V2353) NIL)
+        ((AND (CONSP V2353)
+              (shen.wrapper
+               (let Args (LIST (CAR V2353))
+                    (let NewF (shen.maplispsym V2352)
+                         (trap-error (APPLY NewF Args)
+                                     (lambda E
+                                             (COND
+                                              ((shen.arity-error? V2352 Args)
+                                               (shen.funcall
+                                                (EVAL
+                                                 (shen.nest-lambda V2352 NewF))
+                                                Args))
+                                              ((EQ NewF 'or)
+                                               (shen.funcall
+                                                (lambda X1
+                                                        (lambda X2 (or X1 X2)))
+                                                Args))
+                                              ((EQ NewF 'and)
+                                               (shen.funcall
+                                                (lambda X1
+                                                        (lambda X2
+                                                                (and X1 X2)))
+                                                Args))
+                                              ((EQ NewF 'trap-error)
+                                               (shen.funcall
+                                                (lambda X1
+                                                        (lambda X2
+                                                                (trap-error X1
+                                                                            X2)))
+                                                Args))
+                                              ((shen.bad-lambda-call? NewF
+                                                                      Args)
+                                               (shen.funcall NewF Args))
+                                              (T (shen.relay-error E)))))))))
+         (CONS (CAR V2353) (shen.find V2352 (CDR V2353))))
+        ((CONSP V2353) (shen.find V2352 (CDR V2353)))
+        (T (shen.sys-error 'shen.find))))
+
+(DEFUN shen.prefix? (V2364 V2365)
+  (COND ((NULL V2364) 'true)
+        ((AND (CONSP V2364)
+              (AND (CONSP V2365) (shen.ABSEQUAL (CAR V2365) (CAR V2364))))
+         (shen.prefix? (CDR V2364) (CDR V2365)))
+        (T 'false)))
+
+(DEFUN shen.print-past-inputs (V2375 V2376 V2377)
+  (COND ((NULL V2376) '_)
+        ((AND (CONSP V2376)
+              (NOT
+               (shen.wrapper
+                (let Args (LIST (CAR V2376))
+                     (let NewF (shen.maplispsym V2375)
+                          (trap-error (APPLY NewF Args)
+                                      (lambda E
+                                              (COND
+                                               ((shen.arity-error? V2375 Args)
+                                                (shen.funcall
+                                                 (EVAL
+                                                  (shen.nest-lambda V2375
+                                                                    NewF))
+                                                 Args))
+                                               ((EQ NewF 'or)
+                                                (shen.funcall
+                                                 (lambda X1
+                                                         (lambda X2
+                                                                 (or X1 X2)))
+                                                 Args))
+                                               ((EQ NewF 'and)
+                                                (shen.funcall
+                                                 (lambda X1
+                                                         (lambda X2
+                                                                 (and X1 X2)))
+                                                 Args))
+                                               ((EQ NewF 'trap-error)
+                                                (shen.funcall
+                                                 (lambda X1
+                                                         (lambda X2
+                                                                 (trap-error X1
+                                                                             X2)))
+                                                 Args))
+                                               ((shen.bad-lambda-call? NewF
+                                                                       Args)
+                                                (shen.funcall NewF Args))
+                                               (T (shen.relay-error E))))))))))
+         (shen.print-past-inputs V2375 (CDR V2376) (1+ V2377)))
+        ((AND (CONSP V2376)
+              (AND (ARRAYP (CAR V2376)) (NOT (STRINGP (CAR V2376)))
+                   (EQ (AREF (CAR V2376) 0) 'shen.tuple)))
+         (do (shen.prhush (shen.app V2377 ". " 'shen.a) (stoutput))
+          (do (shen.prbytes (snd (CAR V2376)))
+           (shen.print-past-inputs V2375 (CDR V2376) (1+ V2377)))))
+        (T (shen.sys-error 'shen.print-past-inputs))))
+
+(DEFUN shen.toplevel_evaluate (V2378 V2379)
+  (COND
+   ((AND (CONSP V2378)
+         (AND (CONSP (CDR V2378))
+              (AND (EQ '|:| (CAR (CDR V2378)))
+                   (AND (CONSP (CDR (CDR V2378)))
+                        (AND (NULL (CDR (CDR (CDR V2378))))
+                             (EQ 'true V2379))))))
+    (shen.typecheck-and-evaluate (CAR V2378) (CAR (CDR (CDR V2378)))))
+   ((AND (CONSP V2378) (CONSP (CDR V2378)))
+    (do (shen.toplevel_evaluate (CONS (CAR V2378) NIL) V2379)
+     (do (nl 1) (shen.toplevel_evaluate (CDR V2378) V2379))))
+   ((AND (CONSP V2378) (AND (NULL (CDR V2378)) (EQ 'true V2379)))
+    (shen.typecheck-and-evaluate (CAR V2378) (gensym 'A)))
+   ((AND (CONSP V2378) (AND (NULL (CDR V2378)) (EQ 'false V2379)))
+    (LET ((Eval (shen.eval-without-macros (CAR V2378))))
+      (print Eval)))
+   (T (shen.sys-error 'shen.toplevel_evaluate))))
+
+(DEFUN shen.typecheck-and-evaluate (V2380 V2381)
+  (LET ((Typecheck (shen.typecheck V2380 V2381)))
+    (IF (EQ Typecheck 'false)
+        (simple-error "type error
+")
+        (LET ((Eval (shen.eval-without-macros V2380)))
+          (LET ((Type (shen.pretty-type Typecheck)))
+            (shen.prhush
+             (shen.app Eval (cn " : " (shen.app Type "" 'shen.r)) 'shen.s)
+             (stoutput)))))))
+
+(DEFUN shen.pretty-type (V2382)
+  (shen.mult_subst shen.*alphabet* (shen.extract-pvars V2382) V2382))
+
+(DEFUN shen.extract-pvars (V2387)
+  (COND
+   ((AND (ARRAYP V2387) (NOT (STRINGP V2387)) (EQ (AREF V2387 0) 'shen.pvar))
+    (CONS V2387 NIL))
+   ((CONSP V2387)
+    (union (shen.extract-pvars (CAR V2387)) (shen.extract-pvars (CDR V2387))))
+   (T NIL)))
+
+(DEFUN shen.mult_subst (V2392 V2393 V2394)
+  (COND ((NULL V2392) V2394) ((NULL V2393) V2394)
+        ((AND (CONSP V2392) (CONSP V2393))
+         (shen.mult_subst (CDR V2392) (CDR V2393)
+          (subst (CAR V2392) (CAR V2393) V2394)))
+        (T (shen.sys-error 'shen.mult_subst))))
+

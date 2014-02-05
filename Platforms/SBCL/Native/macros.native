@@ -1,0 +1,510 @@
+
+"**********************************************************************************
+*                           The License						                                      *
+* 										                                                                  *
+* The user is free to produce commercial applications with the software, to 	          *
+* distribute these applications in source or binary  form, and to charge monies         *
+* for them as he sees fit and in concordance with the laws of the land subject 	        *
+* to the following license.							                                                *
+*										                                                                    * 
+* 1. The license applies to all the software and all derived software and 	            *
+*    must appear on such.							                                                  *
+*										                                                                    *
+* 2. It is illegal to distribute the software without this license attached	            *
+*    to it and use of the software implies agreement with the license as such.          *
+*    It is illegal for anyone who is not the copyright holder to tamper with 	          *
+*    or change the license.							                                                *
+*										                                                                    *
+* 3. Neither the names of Lambda Associates or the copyright holder may be used         *
+*    to endorse or promote products built using the software without specific 	        *
+*    prior written permission from the copyright holder.		                            *
+*										                                                                    *
+* 4. That possession of this license does not confer on the copyright holder 	          *
+*    any special contractual obligation towards the user. That in no event 	            * 
+*    shall the copyright holder be liable for any direct, indirect, incidental,        *   
+*    special, exemplary or consequential damages (including but not limited             *
+*    to procurement of substitute goods or services, loss of use, data, 	              * 
+*    interruption), however caused and on any theory of liability, whether in	          * 
+*    contract, strict liability or tort (including negligence) arising in any         	*
+*    way out of the use of the software, even if advised of the possibility of         	*
+*    such damage.						                                                        		* 
+*										                                                                    *
+* 5. It is permitted for the user to change the software, for the purpose of 	          *
+*    improving performance, correcting an error, or porting to a new platform, 	        *
+*    and distribute the derived version of Shen provided the resulting program 	        *
+*    conforms in all respects to the Shen standard and is issued under that             * 
+*    title. The user must make it clear with his distribution that he/she is 	          *
+*    the author of the changes and what these changes are and why. 		                  *
+*										                                                                    *
+* 6. Derived versions of this software in whatever form are subject to the same         *
+*    restrictions. In particular it is not permitted to make derived copies of          *
+*    this software which do not conform to the Shen standard or appear under a          *
+*    different title.								                                                    *
+*										                                                                    *
+*    It is permitted to distribute versions of Shen which incorporate libraries,        *
+*    graphics or other facilities which are not part of the Shen standard.	            *
+*										                                                                    *
+* For an explication of this license see www.shenlanguage.org/license.htm which         *
+* explains this license in full.                                                        *
+*				 						                                                                    *
+*****************************************************************************************
+"
+
+(DEFUN macroexpand (V868)
+  (LET ((Y (shen.compose *macros* V868)))
+    (IF (shen.ABSEQUAL V868 Y)
+        V868
+        (shen.walk #'(LAMBDA (V867) (macroexpand V867)) Y))))
+
+(set '*macros*
+     (CONS 'shen.timer-macro
+           (CONS 'shen.cases-macro
+                 (CONS 'shen.abs-macro
+                       (CONS 'shen.put/get-macro
+                             (CONS 'shen.compile-macro
+                                   (CONS 'shen.datatype-macro
+                                         (CONS 'shen.let-macro
+                                               (CONS 'shen.assoc-macro
+                                                     (CONS
+                                                      'shen.make-string-macro
+                                                      (CONS 'shen.output-macro
+                                                            (CONS
+                                                             'shen.input-macro
+                                                             (CONS
+                                                              'shen.error-macro
+                                                              (CONS
+                                                               'shen.prolog-macro
+                                                               (CONS
+                                                                'shen.synonyms-macro
+                                                                (CONS
+                                                                 'shen.nl-macro
+                                                                 (CONS
+                                                                  'shen.@s-macro
+                                                                  (CONS
+                                                                   'shen.defprolog-macro
+                                                                   (CONS
+                                                                    'shen.function-macro
+                                                                    NIL)))))))))))))))))))
+
+(DEFUN shen.error-macro (V869)
+  (COND
+   ((AND (CONSP V869) (AND (EQ 'error (CAR V869)) (CONSP (CDR V869))))
+    (CONS 'simple-error
+          (CONS (shen.mkstr (CAR (CDR V869)) (CDR (CDR V869))) NIL)))
+   (T V869)))
+
+(DEFUN shen.output-macro (V870)
+  (COND
+   ((AND (CONSP V870) (AND (EQ 'output (CAR V870)) (CONSP (CDR V870))))
+    (CONS 'shen.prhush
+          (CONS (shen.mkstr (CAR (CDR V870)) (CDR (CDR V870)))
+                (CONS (CONS 'stoutput NIL) NIL))))
+   ((AND (CONSP V870)
+         (AND (EQ 'pr (CAR V870))
+              (AND (CONSP (CDR V870)) (NULL (CDR (CDR V870))))))
+    (CONS 'pr (CONS (CAR (CDR V870)) (CONS (CONS 'stoutput NIL) NIL))))
+   (T V870)))
+
+(DEFUN shen.make-string-macro (V871)
+  (COND
+   ((AND (CONSP V871) (AND (EQ 'make-string (CAR V871)) (CONSP (CDR V871))))
+    (shen.mkstr (CAR (CDR V871)) (CDR (CDR V871))))
+   (T V871)))
+
+(DEFUN shen.input-macro (V872)
+  (COND
+   ((AND (CONSP V872) (AND (EQ 'lineread (CAR V872)) (NULL (CDR V872))))
+    (CONS 'lineread (CONS (CONS 'stinput NIL) NIL)))
+   ((AND (CONSP V872) (AND (EQ 'input (CAR V872)) (NULL (CDR V872))))
+    (CONS 'input (CONS (CONS 'stinput NIL) NIL)))
+   ((AND (CONSP V872) (AND (EQ 'read (CAR V872)) (NULL (CDR V872))))
+    (CONS 'read (CONS (CONS 'stinput NIL) NIL)))
+   ((AND (CONSP V872)
+         (AND (EQ 'input+ (CAR V872))
+              (AND (CONSP (CDR V872)) (NULL (CDR (CDR V872))))))
+    (CONS 'input+ (CONS (CAR (CDR V872)) (CONS (CONS 'stinput NIL) NIL))))
+   ((AND (CONSP V872) (AND (EQ 'read-byte (CAR V872)) (NULL (CDR V872))))
+    (CONS 'read-byte (CONS (CONS 'stinput NIL) NIL)))
+   (T V872)))
+
+(DEFUN shen.compose (V873 V874)
+  (COND ((NULL V873) V874)
+        ((CONSP V873)
+         (shen.compose (CDR V873)
+          (let Args (LIST V874)
+               (let NewF (shen.maplispsym (CAR V873))
+                    (trap-error (APPLY NewF Args)
+                                (lambda E
+                                        (COND
+                                         ((shen.arity-error? (CAR V873) Args)
+                                          (shen.funcall
+                                           (EVAL
+                                            (shen.nest-lambda (CAR V873) NewF))
+                                           Args))
+                                         ((EQ NewF 'or)
+                                          (shen.funcall
+                                           (lambda X1 (lambda X2 (or X1 X2)))
+                                           Args))
+                                         ((EQ NewF 'and)
+                                          (shen.funcall
+                                           (lambda X1 (lambda X2 (and X1 X2)))
+                                           Args))
+                                         ((EQ NewF 'trap-error)
+                                          (shen.funcall
+                                           (lambda X1
+                                                   (lambda X2
+                                                           (trap-error X1 X2)))
+                                           Args))
+                                         ((shen.bad-lambda-call? NewF Args)
+                                          (shen.funcall NewF Args))
+                                         (T (shen.relay-error E)))))))))
+        (T (shen.sys-error 'shen.compose))))
+
+(DEFUN shen.compile-macro (V875)
+  (COND
+   ((AND (CONSP V875)
+         (AND (EQ 'compile (CAR V875))
+              (AND (CONSP (CDR V875))
+                   (AND (CONSP (CDR (CDR V875)))
+                        (NULL (CDR (CDR (CDR V875))))))))
+    (CONS 'compile
+          (CONS (CAR (CDR V875))
+                (CONS (CAR (CDR (CDR V875)))
+                      (CONS
+                       (CONS 'lambda
+                             (CONS 'E
+                                   (CONS
+                                    (CONS 'if
+                                          (CONS (CONS 'cons? (CONS 'E NIL))
+                                                (CONS
+                                                 (CONS 'error
+                                                       (CONS
+                                                        "parse error here: ~S~%"
+                                                        (CONS 'E NIL)))
+                                                 (CONS
+                                                  (CONS 'error
+                                                        (CONS "parse error~%"
+                                                              NIL))
+                                                  NIL))))
+                                    NIL)))
+                       NIL)))))
+   (T V875)))
+
+(DEFUN shen.prolog-macro (V876)
+  (COND
+   ((AND (CONSP V876) (EQ 'prolog? (CAR V876)))
+    (LET ((F (gensym 'shen.f)))
+      (LET ((Receive (shen.receive-terms (CDR V876))))
+        (LET ((PrologDef
+               (eval
+                (APPEND (CONS 'defprolog (CONS F NIL))
+                        (APPEND Receive
+                                (APPEND (CONS '<-- NIL)
+                                        (APPEND (shen.pass-literals (CDR V876))
+                                                (CONS '|;| NIL))))))))
+          (LET ((Query
+                 (CONS F
+                       (APPEND Receive
+                               (CONS (CONS 'shen.start-new-prolog-process NIL)
+                                     (CONS (CONS 'freeze (CONS 'true NIL))
+                                           NIL))))))
+            Query)))))
+   (T V876)))
+
+(DEFUN shen.receive-terms (V881)
+  (COND ((NULL V881) NIL)
+        ((AND (CONSP V881)
+              (AND (CONSP (CAR V881))
+                   (AND (EQ 'receive (CAR (CAR V881)))
+                        (AND (CONSP (CDR (CAR V881)))
+                             (NULL (CDR (CDR (CAR V881))))))))
+         (CONS (CAR (CDR (CAR V881))) (shen.receive-terms (CDR V881))))
+        ((CONSP V881) (shen.receive-terms (CDR V881)))
+        (T (shen.sys-error 'shen.receive-terms))))
+
+(DEFUN shen.pass-literals (V884)
+  (COND ((NULL V884) NIL)
+        ((AND (CONSP V884)
+              (AND (CONSP (CAR V884))
+                   (AND (EQ 'receive (CAR (CAR V884)))
+                        (AND (CONSP (CDR (CAR V884)))
+                             (NULL (CDR (CDR (CAR V884))))))))
+         (shen.pass-literals (CDR V884)))
+        ((CONSP V884) (CONS (CAR V884) (shen.pass-literals (CDR V884))))
+        (T (shen.sys-error 'shen.pass-literals))))
+
+(DEFUN shen.defprolog-macro (V885)
+  (COND
+   ((AND (CONSP V885) (AND (EQ 'defprolog (CAR V885)) (CONSP (CDR V885))))
+    (compile 'shen.<defprolog> (CDR V885)
+             #'(LAMBDA (Y) (shen.prolog-error (CAR (CDR V885)) Y))))
+   (T V885)))
+
+(DEFUN shen.datatype-macro (V886)
+  (COND
+   ((AND (CONSP V886) (AND (EQ 'datatype (CAR V886)) (CONSP (CDR V886))))
+    (CONS 'shen.process-datatype
+          (CONS (shen.intern-type (CAR (CDR V886)))
+                (CONS
+                 (CONS 'compile
+                       (CONS (CONS 'function (CONS 'shen.<datatype-rules> NIL))
+                             (CONS (shen.rcons_form (CDR (CDR V886)))
+                                   (CONS
+                                    (CONS 'function
+                                          (CONS 'shen.datatype-error NIL))
+                                    NIL))))
+                 NIL))))
+   (T V886)))
+
+(DEFUN shen.intern-type (V887) (intern (cn "type#" (str V887))))
+
+"(defcc <defmacro>
+ <name> <macrorules> := [define <name> | <macrorules>];)
+
+(defcc <macrorules>
+  <macrorule> <macrorules>;
+  <macrorule> := (append <macrorule> [(protect X) -> (protect X)]);)
+
+(defcc <macrorule>
+  <patterns> -> <macroaction> where <guard>;
+  <patterns> -> <macroaction>;
+  <patterns> <- <macroaction> where <guard>;
+  <patterns> <- <macroaction>;)
+
+(defcc <macroaction>
+  <action> := [[walk [function macroexpand] <action>]];)"
+
+(DEFUN shen.@s-macro (V888)
+  (COND
+   ((AND (CONSP V888)
+         (AND (EQ '@s (CAR V888))
+              (AND (CONSP (CDR V888))
+                   (AND (CONSP (CDR (CDR V888)))
+                        (CONSP (CDR (CDR (CDR V888))))))))
+    (CONS '@s
+          (CONS (CAR (CDR V888))
+                (CONS (shen.@s-macro (CONS '@s (CDR (CDR V888)))) NIL))))
+   ((AND (CONSP V888)
+         (AND (EQ '@s (CAR V888))
+              (AND (CONSP (CDR V888))
+                   (AND (CONSP (CDR (CDR V888)))
+                        (AND (NULL (CDR (CDR (CDR V888))))
+                             (STRINGP (CAR (CDR V888))))))))
+    (LET ((E (explode (CAR (CDR V888)))))
+      (IF (shen.wrapper (shen.greater? (length E) 1))
+          (shen.@s-macro (CONS '@s (APPEND E (CDR (CDR V888)))))
+          V888)))
+   (T V888)))
+
+(DEFUN shen.synonyms-macro (V889)
+  (COND
+   ((AND (CONSP V889) (EQ 'synonyms (CAR V889)))
+    (CONS 'shen.synonyms-help (CONS (shen.rcons_form (CDR V889)) NIL)))
+   (T V889)))
+
+(DEFUN shen.nl-macro (V890)
+  (COND
+   ((AND (CONSP V890) (AND (EQ 'nl (CAR V890)) (NULL (CDR V890))))
+    (CONS 'nl (CONS 1 NIL)))
+   (T V890)))
+
+(DEFUN shen.assoc-macro (V891)
+  (COND
+   ((AND (CONSP V891)
+         (AND (CONSP (CDR V891))
+              (AND (CONSP (CDR (CDR V891)))
+                   (AND (CONSP (CDR (CDR (CDR V891))))
+                        (shen.wrapper
+                         (element? (CAR V891)
+                                   (CONS '@p
+                                         (CONS '@v
+                                               (CONS 'append
+                                                     (CONS 'and
+                                                           (CONS 'or
+                                                                 (CONS '+
+                                                                       (CONS '*
+                                                                             (CONS
+                                                                              'do
+                                                                              NIL))))))))))))))
+    (CONS (CAR V891)
+          (CONS (CAR (CDR V891))
+                (CONS (shen.assoc-macro (CONS (CAR V891) (CDR (CDR V891))))
+                      NIL))))
+   (T V891)))
+
+(DEFUN shen.let-macro (V892)
+  (COND
+   ((AND (CONSP V892)
+         (AND (EQ 'let (CAR V892))
+              (AND (CONSP (CDR V892))
+                   (AND (CONSP (CDR (CDR V892)))
+                        (AND (CONSP (CDR (CDR (CDR V892))))
+                             (CONSP (CDR (CDR (CDR (CDR V892))))))))))
+    (CONS 'let
+          (CONS (CAR (CDR V892))
+                (CONS (CAR (CDR (CDR V892)))
+                      (CONS (shen.let-macro (CONS 'let (CDR (CDR (CDR V892)))))
+                            NIL)))))
+   (T V892)))
+
+(DEFUN shen.abs-macro (V893)
+  (COND
+   ((AND (CONSP V893)
+         (AND (EQ '/. (CAR V893))
+              (AND (CONSP (CDR V893))
+                   (AND (CONSP (CDR (CDR V893)))
+                        (CONSP (CDR (CDR (CDR V893))))))))
+    (CONS 'lambda
+          (CONS (CAR (CDR V893))
+                (CONS (shen.abs-macro (CONS '/. (CDR (CDR V893)))) NIL))))
+   ((AND (CONSP V893)
+         (AND (EQ '/. (CAR V893))
+              (AND (CONSP (CDR V893))
+                   (AND (CONSP (CDR (CDR V893)))
+                        (NULL (CDR (CDR (CDR V893))))))))
+    (CONS 'lambda (CDR V893)))
+   (T V893)))
+
+(DEFUN shen.cases-macro (V896)
+  (COND
+   ((AND (CONSP V896)
+         (AND (EQ 'cases (CAR V896))
+              (AND (CONSP (CDR V896))
+                   (AND (EQ 'true (CAR (CDR V896)))
+                        (CONSP (CDR (CDR V896)))))))
+    (CAR (CDR (CDR V896))))
+   ((AND (CONSP V896)
+         (AND (EQ 'cases (CAR V896))
+              (AND (CONSP (CDR V896))
+                   (AND (CONSP (CDR (CDR V896)))
+                        (NULL (CDR (CDR (CDR V896))))))))
+    (CONS 'if
+          (CONS (CAR (CDR V896))
+                (CONS (CAR (CDR (CDR V896)))
+                      (CONS
+                       (CONS 'simple-error (CONS "error: cases exhausted" NIL))
+                       NIL)))))
+   ((AND (CONSP V896)
+         (AND (EQ 'cases (CAR V896))
+              (AND (CONSP (CDR V896)) (CONSP (CDR (CDR V896))))))
+    (CONS 'if
+          (CONS (CAR (CDR V896))
+                (CONS (CAR (CDR (CDR V896)))
+                      (CONS
+                       (shen.cases-macro (CONS 'cases (CDR (CDR (CDR V896)))))
+                       NIL)))))
+   ((AND (CONSP V896)
+         (AND (EQ 'cases (CAR V896))
+              (AND (CONSP (CDR V896)) (NULL (CDR (CDR V896))))))
+    (simple-error "error: odd number of case elements
+"))
+   (T V896)))
+
+(DEFUN shen.timer-macro (V897)
+  (COND
+   ((AND (CONSP V897)
+         (AND (EQ 'time (CAR V897))
+              (AND (CONSP (CDR V897)) (NULL (CDR (CDR V897))))))
+    (shen.let-macro
+     (CONS 'let
+           (CONS 'Start
+                 (CONS (CONS 'get-time (CONS 'run NIL))
+                       (CONS 'Result
+                             (CONS (CAR (CDR V897))
+                                   (CONS 'Finish
+                                         (CONS (CONS 'get-time (CONS 'run NIL))
+                                               (CONS 'Time
+                                                     (CONS
+                                                      (CONS '-
+                                                            (CONS 'Finish
+                                                                  (CONS 'Start
+                                                                        NIL)))
+                                                      (CONS 'Message
+                                                            (CONS
+                                                             (CONS 'shen.prhush
+                                                                   (CONS
+                                                                    (CONS 'cn
+                                                                          (CONS
+                                                                           "
+run time: "
+                                                                           (CONS
+                                                                            (CONS
+                                                                             'cn
+                                                                             (CONS
+                                                                              (CONS
+                                                                               'str
+                                                                               (CONS
+                                                                                'Time
+                                                                                NIL))
+                                                                              (CONS
+                                                                               " secs
+"
+                                                                               NIL)))
+                                                                            NIL)))
+                                                                    (CONS
+                                                                     (CONS
+                                                                      'stoutput
+                                                                      NIL)
+                                                                     NIL)))
+                                                             (CONS 'Result
+                                                                   NIL))))))))))))))
+   (T V897)))
+
+(DEFUN shen.tuple-up (V898)
+  (COND
+   ((CONSP V898)
+    (CONS '@p (CONS (CAR V898) (CONS (shen.tuple-up (CDR V898)) NIL))))
+   (T V898)))
+
+(DEFUN shen.put/get-macro (V899)
+  (COND
+   ((AND (CONSP V899)
+         (AND (EQ 'put (CAR V899))
+              (AND (CONSP (CDR V899))
+                   (AND (CONSP (CDR (CDR V899)))
+                        (AND (CONSP (CDR (CDR (CDR V899))))
+                             (NULL (CDR (CDR (CDR (CDR V899))))))))))
+    (CONS 'put
+          (CONS (CAR (CDR V899))
+                (CONS (CAR (CDR (CDR V899)))
+                      (CONS (CAR (CDR (CDR (CDR V899))))
+                            (CONS (CONS 'value (CONS '*property-vector* NIL))
+                                  NIL))))))
+   ((AND (CONSP V899)
+         (AND (EQ 'get (CAR V899))
+              (AND (CONSP (CDR V899))
+                   (AND (CONSP (CDR (CDR V899)))
+                        (NULL (CDR (CDR (CDR V899))))))))
+    (CONS 'get
+          (CONS (CAR (CDR V899))
+                (CONS (CAR (CDR (CDR V899)))
+                      (CONS (CONS 'value (CONS '*property-vector* NIL))
+                            NIL)))))
+   (T V899)))
+
+(DEFUN shen.function-macro (V900)
+  (COND
+   ((AND (CONSP V900)
+         (AND (EQ 'function (CAR V900))
+              (AND (CONSP (CDR V900)) (NULL (CDR (CDR V900))))))
+    (shen.function-abstraction (CAR (CDR V900)) (arity (CAR (CDR V900)))))
+   (T V900)))
+
+(DEFUN shen.function-abstraction (V901 V902)
+  (COND ((shen.ABSEQUAL 0 V902) (CONS 'freeze (CONS V901 NIL)))
+        ((shen.ABSEQUAL -1 V902) V901)
+        (T (shen.function-abstraction-help V901 V902 NIL))))
+
+(DEFUN shen.function-abstraction-help (V903 V904 V905)
+  (COND ((shen.ABSEQUAL 0 V904) (CONS V903 V905))
+        (T
+         (LET ((X (gensym 'V)))
+           (CONS '/.
+                 (CONS X
+                       (CONS
+                        (shen.function-abstraction-help V903 (1- V904)
+                         (APPEND V905 (CONS X NIL)))
+                        NIL)))))))
+
+(DEFUN undefmacro (V906) (do (set '*macros* (remove V906 *macros*)) V906))
+
