@@ -1,0 +1,45 @@
+#!/bin/sh
+
+# author: Ramil Farkhshatov Wed Feb  5 11:13:23 PST 2014
+
+url=http://shenlanguage.org/download/Shen.zip
+platforms='clisp sbcl'
+
+latest() {
+  for f in [Ss]hen[-' '][0-9]*/; do echo "$f"; done | sort -V | tail -n 1
+}
+
+test -f "Shen.zip" || wget "$url"
+unzip -q -n Shen.zip
+
+dir="${1-$(latest)}"
+
+build_clisp() {
+  pldir="$dir/Platforms/CLisp/"
+  cp "$dir/K Lambda"/*.kl "$pldir/"
+  awk '
+    /^\(EXT:SAVEINITMEM/ {
+      print "(EXT:SAVEINITMEM \"shen-clisp\" :QUIET T :EXECUTABLE T :NORC T"
+      print "                 :INIT-FUNCTION '"'"'shen.byteloop)"
+      next
+    }
+    {print}' <"$pldir/install.lsp" >"$pldir/myinst.lsp"
+  (cd "$pldir" && { echo '(load "myinst.lsp")'; sleep 10;} | clisp)
+  cp "$pldir/shen-clisp" .
+}
+
+build_sbcl() {
+  pldir="$dir/Platforms/SBCL/"
+  cp "$dir/K Lambda"/*.kl "$pldir/"
+  awk '
+    /^\(SAVE-LISP-AND-DIE/ {
+      print "(SAVE-LISP-AND-DIE \"shen-sbcl\" :EXECUTABLE T"
+      print "                   :TOPLEVEL '"'"'shen.shen)"
+      next
+    }
+    {print}' <"$pldir/install.lsp" >"$pldir/myinst.lsp"
+  (cd "$pldir" && { echo '(load "myinst.lsp")';} | sbcl)
+  cp "$pldir/shen-sbcl" .
+}
+
+for p in $platforms; do build_$p; done
