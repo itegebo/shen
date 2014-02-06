@@ -19,18 +19,22 @@ Mark Tarver
 
 First, see the Google Group and other references on the [community](http://www.shenlanguage.org/community.html) page.
 
+## Ports ##
 * https://github.com/hraberg/shen.clj
 * https://github.com/gregspurrier/shen-ruby
 * https://github.com/tizoc/chibi-shen
-* https://github.com/eschulte/shen-mode
-* https://github.com/vasil-sd/shen-libs
-  * Also see http://www.shenlanguage.org/library.html
 * https://github.com/gravicappa/shen-js
-* https://github.com/gravicappa/klvm
-* https://github.com/gravicappa/shen_run
-* https://github.com/gravicappa/js-kl
 * https://github.com/gravicappa/shen-py
 * https://github.com/yminer/pyshen
 * https://github.com/hraberg/Shen.java
+
+## Misc ##
+
+* https://github.com/eschulte/shen-mode
+* https://github.com/vasil-sd/shen-libs
+  * Also see http://www.shenlanguage.org/library.html
+* https://github.com/gravicappa/klvm
+* https://github.com/gravicappa/shen_run
+* https://github.com/gravicappa/js-kl
 * https://github.com/hraberg/shen-js-repl
   * http://ghettojedi.org/shen-js-repl/
