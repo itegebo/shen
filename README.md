@@ -36,5 +36,6 @@ First, see the Google Group and other references on the [community](http://www.s
 * https://github.com/gravicappa/klvm
 * https://github.com/gravicappa/shen_run
 * https://github.com/gravicappa/js-kl
+* https://github.com/gravicappa/py-kl
 * https://github.com/hraberg/shen-js-repl
   * http://ghettojedi.org/shen-js-repl/
